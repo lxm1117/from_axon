@@ -34,7 +34,6 @@
   nrn_load_dll( RunEnv.s3 )
 }
 */
-//nrn_load_dll("ca1n1-mod/i686/.libs/libnrnmech.so.0")
 
 //================================================================================
 func vdef(){

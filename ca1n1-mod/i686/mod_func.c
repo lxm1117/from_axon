@@ -34,6 +34,7 @@ modl_reg(){
     fprintf(stderr," cdp.mod");
     fprintf(stderr," expsyn2b.mod");
     fprintf(stderr," expsyn2b_1.mod");
+    fprintf(stderr," expsyn2c.mod");
     fprintf(stderr," expsyn2c_1.mod");
     fprintf(stderr," fK_DR_n1.mod");
     fprintf(stderr," fNa_n1.mod");
@@ -78,6 +79,7 @@ modl_reg(){
   _cdp_reg();
   _expsyn2b_reg();
   _expsyn2b_1_reg();
+  _expsyn2c_reg();
   _expsyn2c_1_reg();
   _fK_DR_n1_reg();
   _fNa_n1_reg();
