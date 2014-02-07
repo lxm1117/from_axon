@@ -792,10 +792,10 @@ proc pDE_asg(){
   tauG_n_KDR_i1 =0.2 //0.5
 
   Gbar_KA = 2 //3.9817//22.8697
-  s0_Gbar_KA=2.4
-  aXi1_Gbar_KA=2.2 
+  s0_Gbar_KA=2
+  aXi1_Gbar_KA=2 
 
-  vhalf_n_KA_i1 = -31//-22.1692
+  vhalf_n_KA_i1 = -32//-22.1692
   slope_n_KA_i1 = -10
   tauA_n_KA_i1 =  50 //2
   tauG_n_KA_i1=0.3
@@ -823,23 +823,23 @@ proc pDE_asg(){
   aXi0_Gbar_Naf = 2000	//5040.424367
   aXi1_Gbar_Naf = 2500	//5858.930227
   vhalf_n_Naf_i0 = -36	//-38.44379894
-  slope_n_Naf_i0 = -7	//-9.598696282
+  slope_n_Naf_i0 = -8//-7	//-9.598696282
   tauA_n_Naf_i0 = 0.001	//0.007876330484
   vhalf_h_Naf_i0 = -55		//-66.39889686
   slope_h_Naf_i0 = 8		//5.802146861
   tauA_h_Naf_i0 = 5		//49.62560014
 
   vhalf_n_Naf_i1 = -41		//-40.51851447
-  slope_n_Naf_i1 = -10//-7		//-9.151984974
+  slope_n_Naf_i1 = -11//-10		//-9.151984974
   tauA_n_Naf_i1 = 0.001	//0.006443370656
   vhalf_h_Naf_i1 = -58		//-60.76709627
   slope_h_Naf_i1 = 8		//9.596468476
   tauA_h_Naf_i1 = 10		//28.52248985
   tauG_h_Naf_i1 = 0.5 //0.7
 
-  Gbar_KDR = 100	//586.6743366
-  sO_Gbar_KDR = 320	//1373.24255
-  aXh_Gbar_KDR = 600	//3470.572292
+  Gbar_KDR = 50	//586.6743366
+  sO_Gbar_KDR = 200	//1373.24255
+  aXh_Gbar_KDR = 500	//3470.572292
   aXi0_Gbar_KDR = 1500	//5972.678208
   aXi1_Gbar_KDR = 5000	//3740.588542
 
