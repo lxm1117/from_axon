@@ -81,6 +81,7 @@ proc mulfit_cell_init() {
     do_h()
     do_KDR()
     do_KA()
+    do_KDM()
   }
   //forsec "dend" {do_h()}
 
@@ -211,9 +212,7 @@ proc do_KDR(){ local i
     gbar_KDR_i1 = Gbar_KDR
     if(vdef("Gbar_KDR_dslope") && !issection("axon.*")) 	gbar_KDR_i1 = Gbar_KDR *(1+Gbar_KDR_dslope*ydistP())
 
-    ifsec "soma" 	if(vdef("sO_Gbar_KDR"))			gbar_KDR_i1 	= sO_Gbar_KDR
-    ifsec "axon_hill" 	if(vdef("sO_Gbar_KDR"))			gbar_KDR_i1 	= sO_Gbar_KDR
-
+    ifsec "soma" 	if(vdef("s0_Gbar_KDR"))			gbar_KDR_i1 	= s0_Gbar_KDR
     ifsec "axon_hill" 	if(vdef("aXh_Gbar_KDR"))		gbar_KDR_i1 	= aXh_Gbar_KDR
     ifsec "axon_mnode" if(vdef("aXm_Gbar_KDR"))		gbar_KDR_i1 	= aXm_Gbar_KDR
     if( issection("axon_mnode.*") || issection("axon_hill.*" ) ) return
@@ -293,18 +292,22 @@ proc do_KA(){ local i
 
     if(vdef("Gbar_KA_dslope") && !issection("axon.*")) 		gbar_KA_i1 = Gbar_KA *(1+Gbar_KA_dslope*ydistP() )
 
-    //ifsec "axon_hill" 	if(vdef("aXh_Gbar_KA"))			gbar_KA_i1 	= aXh_Gbar_KA
-    //ifsec "axon_mnode" if(vdef("aXm_Gbar_KA"))			gbar_KA_i1 	= aXm_Gbar_KA
-    //if( issection("axon_mnode.*") || issection("axon_hill.*" ) ) return
+    //ifsec "axon_hill" 	if(vdef("aXh_Gbar_KA"))		gbar_KA_i1 	= aXh_Gbar_KA
+    ifsec "axon_hill" 		if(vdef("s0_Gbar_KA"))		gbar_KA_i1	= s0_Gbar_KA
+		
+    ifsec "axon_mnode" if(vdef("aXm_Gbar_KA"))			gbar_KA_i1 	= 0 //aXm_Gbar_KA
 
     //ifsec "axon" if( vdef("aX_Gbar_KA"))			gbar_KA_i1	= aX_Gbar_KA
     ifsec "axon_iseg" {	
       //if( vdef( "aXi_Gbar_KA" )) 				gbar_KA_i1 	= aXi_Gbar_KA
       //ifsec "axon_iseg[0]" 	if( vdef( "aXi0_Gbar_KA" )) 	gbar_KA_i1 	= aXi0_Gbar_KA
-      ifsec "axon_iseg[1]" 	if( vdef( "aXi1_Gbar_KA" )) 	gbar_KA_i1 	= aXi1_Gbar_KA
+      //ifsec "axon_iseg[1]" 	if( vdef( "aXi1_Gbar_KA" )) 	gbar_KA_i1 	= aXi1_Gbar_KA
+
+	ifsec "axon_iseg[0]"    if( vdef( "s0_Gbar_KA" ))	gbar_KA_i1	= s0_Gbar_KA
+	ifsec "axon_iseg[1]"	if( vdef( "s0_Gbar_KA" ))	gbar_KA_i1	= s0_Gbar_KA
     }
-    ifsec "axon_inode"       	if( vdef( "aXr_Gbar_KA" )) 	gbar_KA_i1 	= aXr_Gbar_KA
-    ifsec "axon_mnode"       	if( vdef( "aXm_Gbar_KA" )) 	gbar_KA_i1 	= aXm_Gbar_KA
+    ifsec "axon_inode"       	if( vdef( "aXr_Gbar_KA" )) 	gbar_KA_i1 	= 0 //aXr_Gbar_KA
+    ifsec "axon_mnode"       	if( vdef( "aXm_Gbar_KA" )) 	gbar_KA_i1 	= 0  //aXm_Gbar_KA
   }
 }
 //--------------------------------------------------------------------------------
@@ -328,6 +331,21 @@ proc do_KAa(){ local i
     ifsec "axon_inode"       	if( vdef( "aXr_Gbar_KAa" )) 	gbar_KAa_i1 	= aXr_Gbar_KAa
     ifsec "axon_mnode"       	if( vdef( "aXm_Gbar_KAa" )) 	gbar_KAa_i1 	= aXm_Gbar_KAa
   }
+}
+//------------------------------------------------------------------------------
+proc do_KDM(){
+	ifsec "soma"		if( vdef( "Gbar_KDM")){
+		insert KDM_i1	
+		gbar_KDM_i1 = Gbar_KDM
+	}
+	ifsec "axon_hill"	if( vdef( "Gbar_KDM")){
+		insert KDM_i1
+		gbar_KDM_i1 = Gbar_KDM
+	}
+	ifsec "axon_iseg"	if( vdef( "Gbar_KDM")){
+		insert KDM_i1
+		gbar_KDM_i1 = Gbar_KDM
+	}
 }
 //--------------------------------------------------------------------------------
 proc do_h(){ local i
@@ -791,19 +809,29 @@ proc pDE_asg(){
   gates_n_KDR_i1 = 4
   tauG_n_KDR_i1 =0.2 //0.5
 
-  Gbar_KA = 2 //3.9817//22.8697
-  s0_Gbar_KA=2
-  aXi1_Gbar_KA=2 
+  Gbar_KA = 0.5 //3.9817//22.8697
+  s0_Gbar_KA= 0
+  //aXh_Gbar_KA= s0_Gbar_KA
+  //aXi0_Gbar_KA= s0_Gbar_KA
+  //aXi1_Gbar_KA= s0_Gbar_KA //0.1 
 
-  vhalf_n_KA_i1 = -32//-22.1692
+  vhalf_n_KA_i1 = -30//-22.1692
   slope_n_KA_i1 = -10
-  tauA_n_KA_i1 =  50 //2
-  tauG_n_KA_i1=0.3
-  vhalfD_h_KA_i1 =200 //-35
+  tauA_n_KA_i1 =  2
+  tauG_n_KA_i1=0.5
+  vhalfD_h_KA_i1 =-35
   slope_h_KA_i1 = 8
-  tauA_h_KA_i1 = 1000  //50
+  tauA_h_KA_i1 = 50
   Gbar_KA_dslope = 0.008
 
+  Gbar_KDM=5
+  vhalf_n_KDM_i1=-35
+  slope_n_KDM_i1=-10
+  tauA_n_KDM_i1=100
+  tauG_n_KDM_i1=0.5
+  vhalfD_h_KDM_i1=200
+  slope_h_KDM_i1=8
+  tauA_h_KDM_i1=1000
 
   Gbar_h = 0.08664 //0.0536693 //0.24232
   Gbar_h_dslope = 0.008 //0.00131903
@@ -817,36 +845,37 @@ proc pDE_asg(){
   tauDv_n_h_i0 = 0
 
   // hoc fit variables
-  Gbar_Naf = 150	//564.3703251
-  s0_Gbar_Naf = 300	//2934.613315
-  aXh_Gbar_Naf = 1500	//3545.109547
+  Gbar_Naf = 100	//564.3703251
+  s0_Gbar_Naf = 500	//2934.613315
+  aXh_Gbar_Naf = 1000	//3545.109547
   aXi0_Gbar_Naf = 2000	//5040.424367
   aXi1_Gbar_Naf = 2500	//5858.930227
   vhalf_n_Naf_i0 = -36	//-38.44379894
-  slope_n_Naf_i0 = -8//-7	//-9.598696282
+  slope_n_Naf_i0 = -7	//-9.598696282
   tauA_n_Naf_i0 = 0.001	//0.007876330484
   vhalf_h_Naf_i0 = -55		//-66.39889686
   slope_h_Naf_i0 = 8		//5.802146861
   tauA_h_Naf_i0 = 5		//49.62560014
+  tauG_h_Naf_i0 = 0.4
 
   vhalf_n_Naf_i1 = -41		//-40.51851447
-  slope_n_Naf_i1 = -11//-10		//-9.151984974
+  slope_n_Naf_i1 = -10		//-9.151984974
   tauA_n_Naf_i1 = 0.001	//0.006443370656
   vhalf_h_Naf_i1 = -58		//-60.76709627
   slope_h_Naf_i1 = 8		//9.596468476
   tauA_h_Naf_i1 = 10		//28.52248985
   tauG_h_Naf_i1 = 0.5 //0.7
 
-  Gbar_KDR = 50	//586.6743366
-  sO_Gbar_KDR = 200	//1373.24255
-  aXh_Gbar_KDR = 500	//3470.572292
+  Gbar_KDR = 40	//586.6743366
+  s0_Gbar_KDR = 80	//1373.24255
+  aXh_Gbar_KDR = 300	//3470.572292
   aXi0_Gbar_KDR = 1500	//5972.678208
   aXi1_Gbar_KDR = 5000	//3740.588542
 
-  vhalf_n_KDR_i1 = -5  //-12	//-6.44820409
+  vhalf_n_KDR_i1 = -3  //-12	//-6.44820409
   slope_n_KDR_i1 = -11//-10	//-10.92037797
-  tauA_n_KDR_i1 = 1//10	//3.611119021
-  tauG_n_KDR_i1 = 0.2
+  tauA_n_KDR_i1 = 4//10	//3.611119021
+  tauG_n_KDR_i1 = 0.3
 }
 // log pDE nfeval
 { printf( "nfeval %g\n", 38255 ) }

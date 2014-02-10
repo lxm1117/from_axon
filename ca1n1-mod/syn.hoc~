@@ -1,0 +1,19 @@
+nsyn=0
+forsec "dend_apical" {nsyn=nsyn+1}
+objref syn[nsyn]
+proc syn_set(){
+	k=0
+	forsec "dend_apical"{
+		syn[k]=new expsyn2c(0.5)
+		syn[k].tot_num=$1  //total stimulation number
+		syn[k].num=$2 	//number of stimulation in each group
+		syn[k].ampar_tot=$3
+		syn[k].del=5
+		syn[k].interval_s=$4  //short interval
+		syn[k].interval_l=$5  //long interval
+		k=k+1
+	}
+}
+soma insert cad
+soma insert caL3d
+soma insert capump

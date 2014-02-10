@@ -10,7 +10,7 @@ NEURON {
 	RANGE ampar_bound, ampar_unbound, ampar_active, ampar_tot, gampar, scca, iampar
 	RANGE nmdar_bound, nmdar_unbound, nmdar_active, nmdar_tot, gnmdar, sccn, inmdar 
 	RANGE nmdar_Mg
-	RANGE num, del, interval
+	RANGE num, tot_num, del, interval_s, interval_l
 	NONSPECIFIC_CURRENT i
 	GLOBAL k_ampar, alpha_ampar, beta_ampar, k_nmdar, alpha_nmdar,beta_nmdar :, stimon
 }
@@ -35,6 +35,7 @@ PARAMETER {
 	k_nmdar=0.02     (1/ms)
 	alpha_nmdar=0.34 (1/ms)
 	beta_nmdar=0.6(1/ms)
+	tmp
 }
 
 ASSIGNED { 
@@ -54,8 +55,10 @@ ASSIGNED {
 	pr1
 	pr2
 	num
+	tot_num
 	del  (ms)
-	interval (ms)
+	interval_s (ms)
+	interval_l (ms)
 	:stimon
 }	
 
@@ -69,7 +72,7 @@ INITIAL {
 	nmdar_bound=0
 
 	relpr()
-	if(stim_index<num) {
+	if(stim_index<tot_num) {
 		net_send(del,1)
 	}
 }
@@ -84,7 +87,7 @@ BREAKPOINT {
         UNITSOFF
         block = 8.8*exp(v/12.5)/(mg + 8.8*exp(v/12.5))
         UNITSON
-	if(stim_index<num){
+	if(stim_index<tot_num){
 		SOLVE state METHOD cnexp
 	}
 	ampar_unbound=ampar_tot-ampar_active-ampar_bound
@@ -107,9 +110,10 @@ DERIVATIVE state {
 	nmdar_active'=beta_nmdar*nmdar_bound - alpha_nmdar*nmdar_active	
 }
 
-NET_RECEIVE( weight (uS)) { 
+NET_RECEIVE(weighti (uS)) { 
 	if(flag==1){
-		pr1=rlpr[stim_index]
+		tmp=fmod(stim_index,num)	
+		pr1=rlpr[tmp]
 		pr2=scop_random()
 				
 		if(pr2<pr1){
@@ -129,9 +133,11 @@ NET_RECEIVE( weight (uS)) {
 			printf("%s %f %s %f %s %f %s %f %s %f\n", "pr1: ", pr1, "pr2: ", pr2, "stim_index: ", stim_index, "ampar_unbound: ", ampar_unbound, "nmdar_unbound: ", nmdar_unbound)
 		}
 		
-		if(stim_index<=num-2){
+		if(stim_index<=tot_num-2){
+		   if(stim_index > 0 && fmod(stim_index,num)==0) {
+			net_send(interval_l,1)
+		   } else { net_send(interval_s,1)}
 		   stim_index=stim_index+1
-		   net_send(interval,1)	
 		}
 
 
