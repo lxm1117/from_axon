@@ -13,6 +13,7 @@ modl_reg(){
     fprintf(stderr," Ca.mod");
     fprintf(stderr," capump.mod");
     fprintf(stderr," cdp.mod");
+    fprintf(stderr," epasn.mod");
     fprintf(stderr," expsyn2b_1.mod");
     fprintf(stderr," expsyn2b.mod");
     fprintf(stderr," expsyn2c_1.mod");
@@ -40,6 +41,8 @@ modl_reg(){
     fprintf(stderr," KDR_i1.mod");
     fprintf(stderr," KDR_mig.mod");
     fprintf(stderr," kext.mod");
+    fprintf(stderr," kextna1.mod");
+    fprintf(stderr," kextna2.mod");
     fprintf(stderr," kextna.mod");
     fprintf(stderr," KIR_i0.mod");
     fprintf(stderr," Ktf_p1.mod");
@@ -62,6 +65,7 @@ modl_reg(){
   _Ca_reg();
   _capump_reg();
   _cdp_reg();
+  _epasn_reg();
   _expsyn2b_1_reg();
   _expsyn2b_reg();
   _expsyn2c_1_reg();
@@ -89,6 +93,8 @@ modl_reg(){
   _KDR_i1_reg();
   _KDR_mig_reg();
   _kext_reg();
+  _kextna1_reg();
+  _kextna2_reg();
   _kextna_reg();
   _KIR_i0_reg();
   _Ktf_p1_reg();

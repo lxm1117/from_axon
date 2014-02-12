@@ -846,11 +846,11 @@ proc pDE_asg(){
 
   // hoc fit variables
   Gbar_Naf = 100	//564.3703251
-  s0_Gbar_Naf = 500	//2934.613315
-  aXh_Gbar_Naf = 1000	//3545.109547
+  s0_Gbar_Naf = 180	//2934.613315
+  aXh_Gbar_Naf = 500	//3545.109547
   aXi0_Gbar_Naf = 2000	//5040.424367
   aXi1_Gbar_Naf = 2500	//5858.930227
-  vhalf_n_Naf_i0 = -36	//-38.44379894
+  vhalf_n_Naf_i0 = -35	//-38.44379894
   slope_n_Naf_i0 = -7	//-9.598696282
   tauA_n_Naf_i0 = 0.001	//0.007876330484
   vhalf_h_Naf_i0 = -55		//-66.39889686
@@ -858,7 +858,7 @@ proc pDE_asg(){
   tauA_h_Naf_i0 = 5		//49.62560014
   tauG_h_Naf_i0 = 0.4
 
-  vhalf_n_Naf_i1 = -41		//-40.51851447
+  vhalf_n_Naf_i1 = -40		//-40.51851447
   slope_n_Naf_i1 = -10		//-9.151984974
   tauA_n_Naf_i1 = 0.001	//0.006443370656
   vhalf_h_Naf_i1 = -58		//-60.76709627
@@ -866,15 +866,15 @@ proc pDE_asg(){
   tauA_h_Naf_i1 = 10		//28.52248985
   tauG_h_Naf_i1 = 0.5 //0.7
 
-  Gbar_KDR = 40	//586.6743366
+  Gbar_KDR = 80	//586.6743366
   s0_Gbar_KDR = 80	//1373.24255
   aXh_Gbar_KDR = 300	//3470.572292
   aXi0_Gbar_KDR = 1500	//5972.678208
-  aXi1_Gbar_KDR = 5000	//3740.588542
+  aXi1_Gbar_KDR = 3000	//3740.588542
 
-  vhalf_n_KDR_i1 = -3  //-12	//-6.44820409
+  vhalf_n_KDR_i1 = -8 //-3  //-12	//-6.44820409
   slope_n_KDR_i1 = -11//-10	//-10.92037797
-  tauA_n_KDR_i1 = 4//10	//3.611119021
+  tauA_n_KDR_i1 = 1//10	//3.611119021
   tauG_n_KDR_i1 = 0.3
 }
 // log pDE nfeval
@@ -1090,5 +1090,4 @@ pDE_do_all()
 
 
 //dfc_plot_all()
-
 
