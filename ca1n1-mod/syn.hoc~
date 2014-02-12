@@ -1,4 +1,3 @@
-/*
 forall insert kext
 forall insert kextna1
 
@@ -87,9 +86,10 @@ vhalf_h_Naf_i1=-63
 s0_Gbar_KDR_i1=100
 tauA_h_Naf_i1=50
 tauA_h_Naf_i0=10
-*/
+vhalf_n_Naf_i0=-35
+vhalf_n_Naf_i1=-40	
 
-proc para_save(){ localobj pvec, file
+proc para_save(){local k localobj file, pvec
 	pvec=new Vector(52)
 	file=new File()
 	
@@ -164,15 +164,22 @@ proc para_save(){ localobj pvec, file
 	pvec.x[51]=Gbar_KDM
 
 	file.wopen($s1)
-	pvec.vwrite(file)
+	//pvec.fwrite(file
+	for k=0,pvec.size()-1{
+		file.printf("%f\n", pvec.x[k])
+	}
+
 	file.close()	
 }
 
-proc para_read(){localobj file, pvec
+proc para_read(){local k localobj pvec, file
 	pvec=new Vector(52)
 	file=new File()
 
 	file=ropen($s1)
+	for k=0, pvec.size()-1{
+		pvec.x[k]=file.scanvar()
+	}
 		
 	//Naf_i0
 	vhalf_n_Naf_i0=pvec.x[0]
@@ -244,4 +251,6 @@ proc para_read(){localobj file, pvec
 	aXi1_Gbar_KDR=pvec.x[49]
 	Gbar_KA=pvec.x[50]
 	Gbar_KDM=pvec.x[51]
+	
+	file.close()
 }

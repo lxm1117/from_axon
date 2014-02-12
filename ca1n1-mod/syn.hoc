@@ -86,9 +86,11 @@ vhalf_h_Naf_i1=-63
 s0_Gbar_KDR_i1=100
 tauA_h_Naf_i1=50
 tauA_h_Naf_i0=10
+vhalf_n_Naf_i0=-35
+vhalf_n_Naf_i1=-40	
 
 proc para_save(){local k localobj file, pvec
-	//pvec=new Vector()
+	pvec=new Vector(52)
 	file=new File()
 	
 	//Naf_i0
@@ -164,7 +166,7 @@ proc para_save(){local k localobj file, pvec
 	file.wopen($s1)
 	//pvec.fwrite(file
 	for k=0,pvec.size()-1{
-		printf("%f\n", pvec.x[k])
+		file.printf("%f\n", pvec.x[k])
 	}
 
 	file.close()	
@@ -174,8 +176,8 @@ proc para_read(){local k localobj pvec, file
 	pvec=new Vector(52)
 	file=new File()
 
-	file=ropen($s1)
-	for k=0, pvec.size(){
+	file.ropen($s1)
+	for k=0, pvec.size()-1{
 		pvec.x[k]=file.scanvar()
 	}
 		
