@@ -7,6 +7,12 @@ modl_reg(){
     fprintf(stderr, "Additional mechanisms from files\n");
 
     fprintf(stderr," aabBK.mod");
+    fprintf(stderr," ca1AH3.mod");
+    fprintf(stderr," ca1AH4.mod");
+    fprintf(stderr," ca1AH.mod");
+    fprintf(stderr," ca1ca.mod");
+    fprintf(stderr," ca1L.mod");
+    fprintf(stderr," ca1n.mod");
     fprintf(stderr," ca1N.mod");
     fprintf(stderr," cad.mod");
     fprintf(stderr," caL3d.mod");
@@ -17,6 +23,8 @@ modl_reg(){
     fprintf(stderr," expsyn2b_1.mod");
     fprintf(stderr," expsyn2b.mod");
     fprintf(stderr," expsyn2c_1.mod");
+    fprintf(stderr," expsyn2c_col3.mod");
+    fprintf(stderr," expsyn2c_col4.mod");
     fprintf(stderr," expsyn2c.mod");
     fprintf(stderr," fK_DR_n1.mod");
     fprintf(stderr," fNa_n1.mod");
@@ -59,6 +67,12 @@ modl_reg(){
     fprintf(stderr, "\n");
   }
   _aabBK_reg();
+  _ca1AH3_reg();
+  _ca1AH4_reg();
+  _ca1AH_reg();
+  _ca1ca_reg();
+  _ca1L_reg();
+  _ca1n_reg();
   _ca1N_reg();
   _cad_reg();
   _caL3d_reg();
@@ -69,6 +83,8 @@ modl_reg(){
   _expsyn2b_1_reg();
   _expsyn2b_reg();
   _expsyn2c_1_reg();
+  _expsyn2c_col3_reg();
+  _expsyn2c_col4_reg();
   _expsyn2c_reg();
   _fK_DR_n1_reg();
   _fNa_n1_reg();
