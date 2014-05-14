@@ -28,10 +28,6 @@
 
 strdef buf__
 proc morpho_set_(){ local i localobj mt
-<<<<<<< HEAD
-	morpho_have_=0
-}	
-=======
   morpho_have_ = 0
   mt = new MechanismType(0)
   for i=0, mt.count()-1 {
@@ -42,7 +38,6 @@ proc morpho_set_(){ local i localobj mt
 }
 morpho_set_()
 	
->>>>>>> f00cd86563690fa5adcced465053e9d5c836cb13
 
 strdef cell_id
 cell_id="n400td-pc2"
@@ -62,53 +57,6 @@ soma {
     pt3dadd( -0.401000, -2.334000, -0.010000, 9.040000 )  // node 2
 }*/
 
-create axon_hill
-//axon_hill {	// taper from 4um to 1um
-//  pt3dclear()
-//  for i=0, 10 pt3dadd( 0, -i, 0, 4 - 3/10*i )
-//}
-
-axon_hill {
-	nseg=30
-	diam(0:1)=2.8:1.01369
-}    
-soma connect axon_hill (0), 0.5
-
-create axon_iseg[2] // Initial segment
-axon_iseg[0] {
-  diam=1.01369
-  L=50.0869 * 0.8
-  axon_hill connect axon_iseg[0] (0), 1
-}
-
-axon_iseg[1] {
-  diam=1.01369
-  L=50.0869 * 0.2
-  axon_iseg[0] connect axon_iseg[1] (0), 1
-}
-
-create axon_mnode[3], axon_inode[2]
-
-axon_iseg[1] connect axon_mnode[0] (0), 1
-
-forsec "axon_mnode" {	// mielinated
-  L=109.499
-  diam=1.51978
-}
-
-forsec "axon_inode" {	// unmielinated
-  L=1.3297
-  diam=1.05
-}
-
-for i=0,1 {
-  axon_mnode[i] connect axon_inode[i] (0), 1
-  axon_inode[i] connect axon_mnode[i+1] (0), 1
-}
-
-
-
-//-----------------------------------------------------------------
 create seg_ym2_L1_T1_d90_R2_B3_Asoma
   seg_ym2_L1_T1_d90_R2_B3_Asoma {
     pt3dadd( -0.401000, -2.334000, -0.010000, 9.040000 )  // node 2
