@@ -29,7 +29,7 @@
 strdef buf__
 proc morpho_set_(){ local i localobj mt
 	morpho_have_=0
-	
+}	
 
 
 strdef cell_id

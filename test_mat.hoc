@@ -9,11 +9,11 @@ etr3=new eTrace()
 etr4=new eTrace()
 etr5=new eTrace()
 
-etr1.load_htf_1p0("2ms+1500pA.htf",1)
-etr2.load_htf_1p0("2ms+1500pA.htf",2)
-etr3.load_htf_1p0("2ms+1500pA.htf",3)
-etr4.load_htf_1p0("2ms+1500pA.htf",4)
-etr5.load_htf_1p0("2ms+1500pA.htf",5)
+etr1.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",1)
+etr2.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",2)
+etr3.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",3)
+etr4.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",4)
+etr5.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",5)
 
 emch.Dph_x_sz=5
 emch.Dph_y_sz=50
@@ -63,7 +63,7 @@ func dist() {local i_var, i_tgt, j_var, j_tgt, k, res localobj var, tgt
 	res=0
         
         if(var.vec_dv.size==0) {  var.vec_dv=var.deriv(var.vec_v, var.vec_t)  }
-	if(tgt.vec_dv.size==0) {  tgt.vec_dv=tgt.deriv(tgt.vec_v, tgt.vec_t) }
+	if(tgt.vec_dv.size==0) {  tgt.vec_dv=tgt.deriv(tgt.vec_v, tgt.vec_t)  }
 	for k=0, var.vec_t.size-1{
 		i_var=(var.vec_v.x[k]-emch.Dph_x_m)/emch.Dph_x_sz
 		i_tgt=(tgt.vec_v.x[k]-emch.Dph_x_m)/emch.Dph_x_sz
@@ -74,6 +74,23 @@ func dist() {local i_var, i_tgt, j_var, j_tgt, k, res localobj var, tgt
 	return res
 }
 
+//this version 2 written on May 8, 2014
+//var and tgt are both datTrace()
+func dist_ver2() { local i_v, j_dv, k, res localobj var, tgt
+	var=$o1
+	tgt=$o2
+	res=0
+
+	var.vec_dv=var.deriv(var.vec_v, var.vec_t)
+	tgt.vec_dv=tgt.deriv(tgt.vec_v, tgt.vec_t)
+	for k=0, var.vec_t.size-1{
+		i_v=(var.vec_v.x[k]-tgt.vec_v.x[k])^2/tgt.vec_v.size
+		j_dv=((var.vec_dv.x[k]-tgt.vec_dv.x[k])/10)^2/tgt.vec_dv.size
+		res+=i_v+j_dv
+	}
+	return res
+}
+	 
 
 //load_file("hoc51_deriv.hoc")
 
