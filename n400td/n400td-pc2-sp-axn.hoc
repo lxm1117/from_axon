@@ -28,10 +28,6 @@
 
 strdef buf__
 proc morpho_set_(){ local i localobj mt
-<<<<<<< HEAD
-	morpho_have_=0
-}	
-=======
   morpho_have_ = 0
   mt = new MechanismType(0)
   for i=0, mt.count()-1 {
@@ -42,14 +38,13 @@ proc morpho_set_(){ local i localobj mt
 }
 morpho_set_()
 	
->>>>>>> f00cd86563690fa5adcced465053e9d5c836cb13
-
 strdef cell_id
 cell_id="n400td-pc2"
 
 create soma
 soma {
     diam=2.8 L=8.039498427
+    //diam=17 L=13.5
     if( morpho_have_ ) execute( "insert morpho" )
       length_morpho=1.74174194
       r0_morpho=4.52 x0_morpho=-1.617 y0_morpho=-3.581 z0_morpho=-0.01
@@ -5321,21 +5316,25 @@ create seg_ym2_L1_T1_d20_R2_B2787_Asoma
 create seg_ym3_L0_T1_d14_R1_B2788_Asoma
   seg_ym3_L0_T1_d14_R1_B2788_Asoma {
     pt3dadd( -1.617000, -3.581000, -0.010000, 9.040000 )  // node 1
-    pt3dadd( -2.726000, -4.383000, 0.060000, 1.460000 )  // node 2788
+    //pt3dadd( -2.726000, -4.383000, 0.060000, 1.460000 )  // node 2788
+    pt3dadd( -2.726000, -4.383000, 0.060000, 9.04000 )  // node 2788
   }
 create seg_ym4_L1_T1_d74_R2788_B2789_Asoma
   seg_ym4_L1_T1_d74_R2788_B2789_Asoma {
-    pt3dadd( -2.726000, -4.383000, 0.060000, 1.460000 )  // node 2788
+    //pt3dadd( -2.726000, -4.383000, 0.060000, 1.460000 )  // node 2788
+    pt3dadd( -2.726000, -4.383000, 0.060000, 7.460000 )  // node 2788
     pt3dadd( -4.002000, -5.308000, -0.010000, 7.460000 )  // node 2789
   }
 create seg_ym5_L2_T1_d13_R2789_B2790_Asoma
   seg_ym5_L2_T1_d13_R2789_B2790_Asoma {
     pt3dadd( -4.002000, -5.308000, -0.010000, 7.460000 )  // node 2789
-    pt3dadd( -5.111000, -6.085000, -0.010000, 1.300000 )  // node 2790
+    pt3dadd( -5.111000, -6.085000, -0.010000, 7.460000 )  // node 2790
+    //pt3dadd( -5.111000, -6.085000, -0.010000, 1.300000 )  // node 2790
   }
 create seg_ym6_L4_T1_d74_R2790_B2791_Asoma
   seg_ym6_L4_T1_d74_R2790_B2791_Asoma {
-    pt3dadd( -5.111000, -6.085000, -0.010000, 1.300000 )  // node 2790
+    //pt3dadd( -5.111000, -6.085000, -0.010000, 1.300000 )  // node 2790
+    pt3dadd( -5.111000, -6.085000, -0.010000, 7.460000 )  // node 2790
     pt3dadd( -5.281000, -5.956000, -0.010000, 7.460000 )  // node 2791
   }
 create seg_ym5_L4_T1_d58_R2791_B2792_Asoma

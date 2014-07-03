@@ -85,7 +85,7 @@ func dist_ver2() { local i_v, j_dv, k, res localobj var, tgt
 	tgt.vec_dv=tgt.deriv(tgt.vec_v, tgt.vec_t)
 	for k=0, var.vec_t.size-1{
 		i_v=(var.vec_v.x[k]-tgt.vec_v.x[k])^2/tgt.vec_v.size
-		j_dv=((var.vec_dv.x[k]-tgt.vec_dv.x[k])/10)^2/tgt.vec_dv.size
+		j_dv=(var.vec_dv.x[k]-tgt.vec_dv.x[k])^2/tgt.vec_dv.size
 		res+=i_v+j_dv
 	}
 	return res

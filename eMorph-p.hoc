@@ -213,8 +213,9 @@ begintemplate eMorph
       area_spine =  nspn * spine_area_avg_wgt
       comp_Fac = 1 + area_spine / area_sec
       cm	= comp_Fac * cm
-      g_pas 	= comp_Fac * g_pas
-      
+      //g_pas 	= comp_Fac * g_pas
+      g_epasn	= comp_Fac * g_epasn
+
       comp_gbar = (area_spine + area_sec )/ area_sec
       if( RmCm_spine_gbar ) comp_section_gbars( comp_gbar )
 
@@ -240,30 +241,33 @@ begintemplate eMorph
   // return the type of the currently accessed section using section name coupled to 3d location
   public n400_af3d
   func n400_af3d(){ local dist, ydist, pdist
-   // dist = distance( 1 )
-   // ydist = abs( y3d(0.5) )
-   // pdist = sqrt( x3d(0.5)^2 + z3d(0.5)^2 )
+    //dist = distance( 1 )
+    //ydist = abs( y3d(0.5) )
+    //pdist = sqrt( x3d(0.5)^2 + z3d(0.5)^2 )
     
     sec_type = 2						// default 
     
     ifsec "axon" sec_type = -2				// axon
     ifsec "soma" sec_type = -1				// soma
-    ifsec "dend"{
-	dist=distance(1)
-	ydist=abs(y3d(0.5))
-	pdist=sqrt(x3d(0.5)^2+z3d(0.5)^2)
-    	ifsec "dend_basal" {
-      		if( dist > 30 ) { sec_type = 0 }			// so_distal
-        	if( dist <= 30 ) { sec_type = 1 } 			// so_proximal
-  	 } 
-    	ifsec "dend_apical" {
-     		if( ydist < 50 && pdist <= 45 ) sec_type = 2			// sr_proximal
-     		if( ydist >= 50 && ydist < 200 && pdist <= 45 ) sec_type = 3	// sr_medial
-      		if( ydist >= 200 && ydist < 520 && pdist <= 45 ) sec_type = 4	// sr_distal
-      		if( ydist < 520 && 		   pdist > 45 ) sec_type = 5	// sr_thin
-      		if( ydist >= 520 && 		   pdist < 75 ) sec_type = 6	// slm_thick
-      		if( ydist >= 520 && 		   pdist >=75 && pdist < 125 ) sec_type = 7	// slm_medium
-      		if( ydist >= 520 && 		   pdist >= 125 ) sec_type = 8			// slm_thin
+    ifsec "seg" { 
+	ifsec "dend"{
+		dist=distance(1)
+		ydist=abs(y3d(0.5))
+		pdist=sqrt(x3d(0.5)^2+z3d(0.5)^2)
+    		ifsec "dend_basal" {
+      			if( dist > 30 ) { sec_type = 0 }			// so_distal
+        		if( dist <= 30 ) { sec_type = 1 } 			// so_proximal
+  	 	} 
+    		ifsec "dend_apical" {
+
+               		if( ydist < 50 && pdist <= 45 ) sec_type = 2			// sr_proximal
+     			if( ydist >= 50 && ydist < 200 && pdist <= 45 ) sec_type = 3	// sr_medial
+      			if( ydist >= 200 && ydist < 520 && pdist <= 45 ) sec_type = 4	// sr_distal
+      			if( ydist < 520 && 		   pdist > 45 ) sec_type = 5	// sr_thin
+      			if( ydist >= 520 && 		   pdist < 75 ) sec_type = 6	// slm_thick
+      			if( ydist >= 520 && 		   pdist >=75 && pdist < 125 ) sec_type = 7	// slm_medium
+      			if( ydist >= 520 && 		   pdist >= 125 ) sec_type = 8			// slm_thin
+    		}
     	}
     }	
     if( idebug > 5 ) printf( "af3d returning %g\n", sec_type )

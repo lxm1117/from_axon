@@ -1,12 +1,18 @@
-forall insert kext
-forall insert kextna1
+//forall insert kext
+//forall insert kextna1
 
 nsyn=0
-forsec "dend_apical" {nsyn=nsyn+1}
+//forsec "dend_apical" {nsyn=nsyn+1}
+forsec "sph" {nsyn=nsyn+1}
+
+stim.amp=0
+stim.dur=0
+
 objref syn[nsyn]
 proc syn_set_col3(){local k
 	k=0
-	forsec "dend_apical"{
+	//forsec "dend_apical"{
+	forsec "sph"{
 		syn[k]=new expsyn2c_col3(0.5)
 		syn[k].tot_num=$1  //total stimulation number
 		syn[k].num=$2 	//number of stimulation in each group
@@ -21,7 +27,8 @@ proc syn_set_col3(){local k
 
 proc syn_set_col4(){ local k
 	k=0
-	forsec "dend_apical"{
+	//forsec "dend_apical"{
+	forsec "sph"{
 		syn[k]=new expsyn2c_col4(0.5)
 		syn[k].tot_num=$1  //total stimulation number
 		syn[k].num=$2 	//number of stimulation in each group
@@ -34,8 +41,10 @@ proc syn_set_col4(){ local k
 	}
 }
 
-soma insert ca1ca
-soma insert ca1L
+forsec "soma" {
+	 insert ca1ca
+	 insert ca1L
+}
 
 actk= 1 //.75
 actna=1  //.75
@@ -63,7 +72,7 @@ forsec "dend_apical" {
 	print secname(),"	", k, "		", distance(0.5)
 	k=k+1
 }
-*/
+
 
 forall insert epasn
 stim.amp=0
@@ -100,6 +109,7 @@ forsec "dend" {
 	insert kextna1
 }
 
+*/
 
 proc para_save(){local k localobj file, pvec
 	pvec=new Vector(61)
@@ -144,7 +154,7 @@ proc para_save(){local k localobj file, pvec
 	pvec.x[26]=tauA_n_KA_i1
 	pvec.x[27]=tauG_n_KA_i1
 
-	pvec.x[28]=vhalf_h_KA_i1
+	pvec.x[28]=vhalfD_h_KA_i1
 	pvec.x[29]=slope_h_KA_i1
 	pvec.x[30]=tauA_h_KA_i1
 	pvec.x[31]=tauG_h_KA_i1
@@ -187,6 +197,7 @@ proc para_save(){local k localobj file, pvec
 	pvec.x[50]=Gbar_KA
 	pvec.x[51]=Gbar_KDM
 
+	/*
 	pvec.x[52]=syn[0].tot_num
 	pvec.x[53]=syn[0].num
 	pvec.x[54]=syn[0].ampar_tot
@@ -197,14 +208,24 @@ proc para_save(){local k localobj file, pvec
 	pvec.x[58]=axon_iseg[0].fhspace_kext
 	
 	pvec.x[59]=soma.depth_ca1ca
-	pvec.x[60]=soma.tau_ca1ca
+	*/
+      	
+	pvec.x[52] = G_Rm
+	pvec.x[53] = G_Ra
+	pvec.x[54] = G_cm
+	pvec.x[55] = Gbar_h
+	//pvec.x[60]=G_ek
+  	
 
 	file.wopen($s1)
 	//pvec.fwrite(file
+	
 	for k=0,pvec.size()-1{
 		file.printf("%f\n", pvec.x[k])
 	}
-	file.close()	
+
+	file.close()
+	print "done file writing"	
 }
 
 proc para_read(){local k localobj pvec, file
@@ -297,6 +318,16 @@ proc para_read(){local k localobj pvec, file
 	aXi1_Gbar_KDR=pvec.x[49]
 	Gbar_KA=pvec.x[50]
 	Gbar_KDM=pvec.x[51]
+     
+	G_Rm = pvec.x[52]
+	G_Ra = pvec.x[53]
+	G_cm = pvec.x[54]
+	Gbar_h = pvec.x[55]
+
+	//G_ek=pvec.x[60]
+
+	
+	/*
 	forsec "dend_apical" fhspace_kext=pvec.x[58]
 	forsec "axon_iseg" fhspace_kext=pvec.x[58]
 	axon_hill.fhspace_kext=pvec.x[58]
@@ -308,29 +339,25 @@ proc para_read(){local k localobj pvec, file
 	syn_set_col4(pvec.x[52], pvec.x[53], pvec.x[54], pvec.x[55], pvec.x[56], pvec.x[57])
 	print "num_tot:", pvec.x[52], "	num:", pvec.x[53], "	ampar_tot:", pvec.x[54], "	nmdar_tot:", pvec.x[55], "	interval_s:", pvec.x[56], "	interval_l:", pvec.x[57]			
 
+	*/
 	file.close()
 }
 
+
 //para_read("para.txt")
-objref soma_cai, soma_ica, soma_v, inmdar_ca_syn21, inmdar_ca_syn32, inmdar_ca_syn42, inmdar_ca_syn51, inmdar_ca_syn53, inmdar_ca_syn56, v_syn21, v_syn32, v_syn42, v_syn51, v_syn53, v_syn56, timevec
+objref soma_cai, soma_ica, soma_v, inmdar_ca_syn, v_syn, timevec
 
 soma_cai=new Vector()
 soma_ica=new Vector()
 soma_v=new Vector()
-inmdar_ca_syn21=new Vector()
-inmdar_ca_syn32=new Vector()
-inmdar_ca_syn42=new Vector()
-inmdar_ca_syn51=new Vector()
-inmdar_ca_syn53=new Vector()
-inmdar_ca_syn56=new Vector()
-v_syn21=new Vector()
-v_syn32=new Vector()
-v_syn42=new Vector()
-v_syn51=new Vector()
-v_syn53=new Vector()
-v_syn56=new Vector()
+inmdar_ca_syn=new Vector()
+v_syn=new Vector()
 timevec=new Vector()
 
+count=0
+forsec "soma" {count=count+1}
+objref soma_cainfl[count] 
+ 
 
 /*
 para_read("para.txt")
@@ -340,45 +367,33 @@ chdir("  ")
 data_save()
 
 */
-proc data_record(){
+
+
+proc data_record(){local k
 	soma_cai.record(&soma.cai(0.5))
 	soma_ica.record(&soma.ica(0.5))
 	soma_v.record(&soma.v(0.5))
+	
+	k=0
+	forsec "soma" {
+		soma_cainfl[k]=new Vector()
+		soma_cainfl[k].record(&cai(0.5))
+		k=k+1
+	}	
 
-	inmdar_ca_syn21.record(&syn[21].inmdar_ca)
-	inmdar_ca_syn32.record(&syn[32].inmdar_ca)
-	inmdar_ca_syn42.record(&syn[42].inmdar_ca)
-	inmdar_ca_syn51.record(&syn[51].inmdar_ca)
-	inmdar_ca_syn53.record(&syn[53].inmdar_ca)
-	inmdar_ca_syn56.record(&syn[56].inmdar_ca)
-
-	v_syn21.record(&sec_23_24_dend_apical.v(0.5))
-	v_syn32.record(&sec_27_35_dend_apical.v(0.5))
-	v_syn42.record(&sec_35_45_dend_apical.v(0.5))
-	v_syn51.record(&sec_46_54_dend_apical.v(0.5))
-	v_syn53.record(&sec_54_56_dend_apical.v(0.5))
-	v_syn56.record(&sec_57_59_dend_apical.v(0.5))
-
+	inmdar_ca_syn.record(&syn[5].inmdar_ca)
+	v_syn.record(&sph_y114_L206_T4_d14_R157_B158_Adend_apical.v(0.5))
 	timevec.record(&t)
 }
 proc data_save(){
 	vecsave(soma_cai, "soma_cai.dat")
 	vecsave(soma_ica, "soma_ica.dat")
 	vecsave(soma_v, "soma_v.dat")
-	vecsave(inmdar_ca_syn21, "inmdar_ca_syn21.dat")
-	vecsave(inmdar_ca_syn32, "inmdar_ca_syn32.dat")
-	vecsave(inmdar_ca_syn42, "inmdar_ca_syn42.dat")
-	vecsave(inmdar_ca_syn51, "inmdar_ca_syn51.dat")
-	vecsave(inmdar_ca_syn53, "inmdar_ca_syn53.dat")
-	vecsave(inmdar_ca_syn56, "inmdar_ca_syn56.dat")
-	vecsave(v_syn21, "v_syn21.dat")
-	vecsave(v_syn32, "v_syn32.dat")
-	vecsave(v_syn42, "v_syn42.dat")
-	vecsave(v_syn51, "v_syn51.dat")
-	vecsave(v_syn53, "v_syn53.dat")
-	vecsave(v_syn56, "v_syn56.dat")
+	vecsave(inmdar_ca_syn, "inmdar_ca_syn.dat")
+	vecsave(v_syn, "v_syn.data")
 }
 
+/*
 proc vecsave() {local k localobj vec, file
 	vec=$o1
 	file=new File()
@@ -391,3 +406,16 @@ proc vecsave() {local k localobj vec, file
 	}
 	file.close()
 }
+*/
+
+obfunc accu_ca(){local k localobj vec, vec_acc
+	vec=$o1
+	vec_acc=new Vector(vec.size())
+	vec_acc.x[0]=vec.x[0]
+	for k=1, vec.size()-1{
+ 		vec_acc.x[k]=vec.x[k]+vec_acc.x[k-1]
+	}
+	return vec_acc
+	
+}
+

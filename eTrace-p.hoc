@@ -665,7 +665,7 @@ begintemplate eTrace
     if( numarg()>2 ){
       sprint( str.s4, "echo $%s", $s3 )		// prepend EnvVar to filename
       systemLF( str.s4, str.s5 )
-      sprint( str.s1, "%s/%s", str.s5, str.s1 )
+      //sprint( str.s1, "%s/%s", str.s5, str.s1 )
       if( idebug ) printf( "load_htf_1p0: opening >>%s<<\n", str.s1 )
     }
 
@@ -759,12 +759,18 @@ begintemplate eTrace
   obfunc load_htf_home(){ localobj st, sf
     sf = new StringFunctions()
     st = new str_obj( $s1 )
+    
+    /* 	
     if( sf.substr( $s1, "/" ) != 0 ){
       systemLF( "echo $HOME", st.s1 )
       sprint( st.s1, "%s/%s", st.s1, $s1 )
     }
+   
     if( numarg() >= 3 ) load_htf( st.s1, $2, $3 )
     if( numarg() < 3 ) load_htf( st.s1, $2 )
+    */
+    load_htf($s1)
+    
     return this
   }
   
