@@ -17,6 +17,7 @@ NEURON {
 	
 	NONSPECIFIC_CURRENT i
 	GLOBAL k_ampar, alpha_ampar, beta_ampar, k_nmdar, alpha_nmdar,beta_nmdar :, stimon
+	POINTER randObjPtr
 }
 
 UNITS {
@@ -84,13 +85,20 @@ ASSIGNED {
 	rlpr[85]
 	pr1
 	pr2
+	:pr3
 	num
 	tot_num
 	del  (ms)
 	interval_s (ms)
 	interval_l (ms)
 	:stimon
+
+	randObjPtr
 }	
+
+PROCEDURE seed(x){
+	set_seed(x)
+}
 
 INITIAL { 
 	stim_index=0
@@ -105,6 +113,7 @@ INITIAL {
 	if(stim_index<tot_num) {
 		net_send(del,1)
 	}
+	:set_seed(5061983)
 }
 
 STATE { ampar_bound
@@ -156,10 +165,12 @@ NET_RECEIVE(weighti (uS)) {
 	if(flag==1){
 		tmp=fmod(stim_index,num)	
 		pr1=rlpr[tmp]
-		pr2=scop_random()
-				
+		pr2=randGen()
+		:pr3=scop_random()
+	
+		printf("%s %f %s %f\n", "pr1: ", pr1, "pr2: ", pr2)		
+	
 		if(pr2<pr1){
-
 			COMMENT
 			if(stimon==0) {
 				ampar_bound=ampar_tot
@@ -172,7 +183,7 @@ NET_RECEIVE(weighti (uS)) {
 
 			ampar_bound=ampar_bound+0.6*ampar_unbound
 			nmdar_bound=nmdar_bound+0.6*nmdar_unbound
-			printf("%s %f %s %f %s %f %s %f %s %f\n", "pr1: ", pr1, "pr2: ", pr2, "stim_index: ", stim_index, "ampar_unbound: ", ampar_unbound, "nmdar_unbound: ", nmdar_unbound)
+			printf("%s %f %s %f %s %f\n",  "stim_index: ", stim_index, "ampar_unbound: ", ampar_unbound, "nmdar_unbound: ", nmdar_unbound)
 		}
 		
 		if(stim_index<=tot_num-2){
@@ -215,4 +226,35 @@ VERBATIM
 ENDVERBATIM
 }
 
+VERBATIM
+double nrn_random_pick(void* r);
+void* nrn_random_arg(int argpos);
+ENDVERBATIM
 
+FUNCTION randGen(){
+VERBATIM
+	if(_p_randObjPtr){
+		/*
+		:Supports separate independent but reproducible streams for
+		: each instance. However, the corresponding hoc Random
+		: distribution MUST be set to Random.uniform(0,1)
+		*/
+		_lrandGen=nrn_random_pick(_p_randObjPtr);
+
+	}else{
+		hoc_execerror("Random object ref not set correctly for randObjPtr", "only via hoc Random");
+	
+	}
+ENDVERBATIM
+}
+
+PROCEDURE setRandObjRef(){
+VERBATIM
+	void** pv4 = (void**)(&_p_randObjPtr);
+	if(ifarg(1)){
+		*pv4 = nrn_random_arg(1);
+	}else{
+		*pv4 = (void*)0;
+	}
+ENDVERBATIM
+}

@@ -8,22 +8,8 @@ forsec "sph" {nsyn=nsyn+1}
 stim.amp=0
 stim.dur=0
 
-objref syn[nsyn]
-proc syn_set_col3(){local k
-	k=0
-	//forsec "dend_apical"{
-	forsec "sph"{
-		syn[k]=new expsyn2c_col3(0.5)
-		syn[k].tot_num=$1  //total stimulation number
-		syn[k].num=$2 	//number of stimulation in each group
-		syn[k].ampar_tot=$3
-		syn[k].nmdar_tot=$4
-		syn[k].del=10
-		syn[k].interval_s=$5  //short interval
-		syn[k].interval_l=$6  //long interval
-		k=k+1
-	}
-}
+objref syn[nsyn],r[nsyn]
+use_mcell_ran4(1)
 
 proc syn_set_col4(){ local k
 	k=0
@@ -37,6 +23,11 @@ proc syn_set_col4(){ local k
 		syn[k].del=10
 		syn[k].interval_s=$5  //short interval
 		syn[k].interval_l=$6  //long interval
+		
+		r[k]=new Random(k*10+11)
+		r[k].uniform(0,1)
+		syn[k].setRandObjRef(r[k])		
+
 		k=k+1
 	}
 }

@@ -71,6 +71,8 @@ extern double hoc_Exp();
 #define _g _p[123]
 #define _tsav _p[124]
 #define _nd_area  *_ppvar[0]._pval
+#define randObjPtr	*_ppvar[2]._pval
+#define _p_randObjPtr	_ppvar[2]._pval
  
 #if MAC
 #if !defined(v)
@@ -80,10 +82,13 @@ extern double hoc_Exp();
 #define h _mlhh
 #endif
 #endif
- static int hoc_nrnpointerindex =  -1;
+ static int hoc_nrnpointerindex =  2;
  /* external NEURON variables */
  /* declaration of user functions */
+ static double _hoc_randGen();
  static double _hoc_relpr();
+ static double _hoc_setRandObjRef();
+ static double _hoc_seed();
  static int _mechtype;
 extern int nrn_get_mechtype();
  extern Prop* nrn_point_prop_;
@@ -118,9 +123,14 @@ extern int nrn_get_mechtype();
  "loc", _hoc_loc_pnt,
  "has_loc", _hoc_has_loc,
  "get_loc", _hoc_get_loc_pnt,
+ "randGen", _hoc_randGen,
  "relpr", _hoc_relpr,
+ "setRandObjRef", _hoc_setRandObjRef,
+ "seed", _hoc_seed,
  0, 0
 };
+#define randGen randGen_expsyn2c_col4
+ extern double randGen();
  /* declare global and static user variables */
 #define alpha_nmdar alpha_nmdar_expsyn2c_col4
  double alpha_nmdar = 0.34;
@@ -236,7 +246,7 @@ extern int nrn_get_mechtype();
  
 static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
  
-#define _cvode_ieq _ppvar[3]._i
+#define _cvode_ieq _ppvar[4]._i
  /* connect range variables in _p that hoc is supposed to know about */
  static char *_mechanism[] = {
  "6.2.0",
@@ -270,6 +280,7 @@ static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
  "nmdar_bound",
  "nmdar_active",
  0,
+ "randObjPtr",
  0};
  
 static void nrn_alloc(_prop)
@@ -293,7 +304,7 @@ static void nrn_alloc(_prop)
  	_prop->param = _p;
  	_prop->param_size = 125;
   if (!nrn_point_prop_) {
- 	_ppvar = nrn_prop_datum_alloc(_mechtype, 4, _prop);
+ 	_ppvar = nrn_prop_datum_alloc(_mechtype, 5, _prop);
   }
  	_prop->dparam = _ppvar;
  	/*connect ionic variables to this model*/
@@ -306,7 +317,7 @@ static void nrn_alloc(_prop)
  0,0
 };
  
-#define _tqitem &(_ppvar[2]._pvoid)
+#define _tqitem &(_ppvar[3]._pvoid)
  static _net_receive();
  typedef (*_Pfrv)();
  extern _Pfrv* pnt_receive;
@@ -321,13 +332,13 @@ static void nrn_alloc(_prop)
 	 0);
  _mechtype = nrn_get_mechtype(_mechanism[1]);
      _nrn_setdata_reg(_mechtype, _setdata);
-  hoc_register_dparam_size(_mechtype, 4);
+  hoc_register_dparam_size(_mechtype, 5);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  pnt_receive[_mechtype] = _net_receive;
  pnt_receive_size[_mechtype] = 1;
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 expsyn2c_col4 /home/ximi/Documents/from_axon/ca1n1-mod/x86_64/expsyn2c_col4.mod\n");
+ 	ivoc_help("help ?1 expsyn2c_col4 /home/neuro/from_axon/ca1n1-mod/x86_64/expsyn2c_col4.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -341,10 +352,26 @@ static int _ninits = 0;
 static int _match_recurse=1;
 static _modl_cleanup(){ _match_recurse=1;}
 static relpr();
+static setRandObjRef();
+static seed();
  
 static int _ode_spec1(), _ode_matsol1();
  static int _slist1[4], _dlist1[4];
  static int state();
+ 
+static int  seed (  _lx )  
+	double _lx ;
+ {
+   set_seed ( _lx ) ;
+    return 0; }
+ 
+static double _hoc_seed(_vptr) void* _vptr; {
+ double _r;
+    _hoc_setdata(_vptr);
+ _r = 1.;
+ seed (  *getarg(1) ) ;
+ return(_r);
+}
  
 /*CVODE*/
  static int _ode_spec1 () {_reset=0;
@@ -381,11 +408,12 @@ static _net_receive (_pnt, _args, _lflag) Point_process* _pnt; double* _args; do
    if ( _lflag  == 1.0 ) {
      tmp = fmod ( stim_index , num ) ;
      pr1 = rlpr [ ((int) tmp ) ] ;
-     pr2 = scop_random ( ) ;
+     pr2 = randGen ( _threadargs_ ) ;
+     printf ( "%s %f %s %f\n" , "pr1: " , pr1 , "pr2: " , pr2 ) ;
      if ( pr2 < pr1 ) {
        ampar_bound = ampar_bound + 0.6 * ampar_unbound ;
        nmdar_bound = nmdar_bound + 0.6 * nmdar_unbound ;
-       printf ( "%s %f %s %f %s %f %s %f %s %f\n" , "pr1: " , pr1 , "pr2: " , pr2 , "stim_index: " , stim_index , "ampar_unbound: " , ampar_unbound , "nmdar_unbound: " , nmdar_unbound ) ;
+       printf ( "%s %f %s %f %s %f\n" , "stim_index: " , stim_index , "ampar_unbound: " , ampar_unbound , "nmdar_unbound: " , nmdar_unbound ) ;
        }
      if ( stim_index <= tot_num - 2.0 ) {
        if ( stim_index > 0.0  && fmod ( stim_index + 1.0 , num )  == 0.0 ) {
@@ -433,6 +461,56 @@ static double _hoc_relpr(_vptr) void* _vptr; {
     _hoc_setdata(_vptr);
  _r = 1.;
  relpr (  ) ;
+ return(_r);
+}
+ 
+/*VERBATIM*/
+double nrn_random_pick(void* r);
+void* nrn_random_arg(int argpos);
+ 
+double randGen (  )  {
+   double _lrandGen;
+ 
+/*VERBATIM*/
+	if(_p_randObjPtr){
+		/*
+		:Supports separate independent but reproducible streams for
+		: each instance. However, the corresponding hoc Random
+		: distribution MUST be set to Random.uniform(0,1)
+		*/
+		_lrandGen=nrn_random_pick(_p_randObjPtr);
+
+	}else{
+		hoc_execerror("Random object ref not set correctly for randObjPtr", "only via hoc Random");
+	
+	}
+ 
+return _lrandGen;
+ }
+ 
+static double _hoc_randGen(_vptr) void* _vptr; {
+ double _r;
+    _hoc_setdata(_vptr);
+ _r =  randGen (  ) ;
+ return(_r);
+}
+ 
+static int  setRandObjRef (  )  {
+   
+/*VERBATIM*/
+	void** pv4 = (void**)(&_p_randObjPtr);
+	if(ifarg(1)){
+		*pv4 = nrn_random_arg(1);
+	}else{
+		*pv4 = (void*)0;
+	}
+  return 0; }
+ 
+static double _hoc_setRandObjRef(_vptr) void* _vptr; {
+ double _r;
+    _hoc_setdata(_vptr);
+ _r = 1.;
+ setRandObjRef (  ) ;
  return(_r);
 }
  
@@ -631,7 +709,7 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
  { {
  for (; t < _break; t += dt) {
  error =  state();
- if(error){fprintf(stderr,"at line 120 in file expsyn2c_col4.mod:\n		SOLVE state METHOD cnexp\n"); nrn_complain(_p); abort_run(error);}
+ if(error){fprintf(stderr,"at line 130 in file expsyn2c_col4.mod:\n		SOLVE state METHOD cnexp\n"); nrn_complain(_p); abort_run(error);}
  
 }}
  t = _save;
