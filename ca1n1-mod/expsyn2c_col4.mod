@@ -16,7 +16,7 @@ NEURON {
 	RANGE num, tot_num, del, interval_s, interval_l
 	
 	NONSPECIFIC_CURRENT i
-	GLOBAL k_ampar, alpha_ampar, beta_ampar, k_nmdar, alpha_nmdar,beta_nmdar :, stimon
+	GLOBAL k_ampar, alpha_ampar, beta_ampar, k_nmdar, alpha_nmdar, beta_nmdar, alpha2_nmdar :, stimon
 	POINTER randObjPtr
 }
 
@@ -41,7 +41,8 @@ PARAMETER {
 	alpha_ampar=2    (1/ms)
 	beta_ampar=2     (1/ms)
 	k_nmdar=0.02     (1/ms)
-	alpha_nmdar=0.34 (1/ms)
+	alpha_nmdar=0.17 (1/ms) :0.34 (1/ms)
+	alpha2_nmdar=0.17 (1/ms)
 	beta_nmdar=0.6(1/ms)
 	tmp
 	:f=FARADAY/1000		  (coulomb)	
@@ -158,7 +159,7 @@ DERIVATIVE state {
 	ampar_bound'=-k_ampar*ampar_bound - beta_ampar*ampar_bound + alpha_ampar*ampar_active:+syn_weight*0.4*ampar_unbound
 	ampar_active'=beta_ampar*ampar_bound - alpha_ampar*ampar_active
 	nmdar_bound'=-k_nmdar*nmdar_bound - beta_nmdar*nmdar_bound + alpha_nmdar*nmdar_active:+syn_weight*0.4*nmdar_unbound
-	nmdar_active'=beta_nmdar*nmdar_bound - alpha_nmdar*nmdar_active	
+	nmdar_active'=beta_nmdar*nmdar_bound - alpha_nmdar*nmdar_active - alpha2_nmdar*nmdar_active
 }
 
 NET_RECEIVE(weighti (uS)) { 
@@ -182,8 +183,9 @@ NET_RECEIVE(weighti (uS)) {
 			ENDCOMMENT
 
 			ampar_bound=ampar_bound+0.6*ampar_unbound
-			nmdar_bound=nmdar_bound+0.6*nmdar_unbound
-			printf("%s %f %s %f %s %f\n",  "stim_index: ", stim_index, "ampar_unbound: ", ampar_unbound, "nmdar_unbound: ", nmdar_unbound)
+			:nmdar_bound=nmdar_bound+0.6*nmdar_unbound
+			nmdar_bound=nmdar_bound+0.8*nmdar_unbound
+			printf("%s %f %s %f %s %f  %s %f %s %f %s %f\n",  "stim_index: ", stim_index, "ampar_unbound: ", ampar_unbound, "nmdar_unbound: ", nmdar_unbound, "ampar_active: ", ampar_active, "nmdar_active: ", nmdar_active, "ampar_bound: ", ampar_bound)
 		}
 		
 		if(stim_index<=tot_num-2){

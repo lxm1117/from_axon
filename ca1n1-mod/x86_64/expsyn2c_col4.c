@@ -132,8 +132,10 @@ extern int nrn_get_mechtype();
 #define randGen randGen_expsyn2c_col4
  extern double randGen();
  /* declare global and static user variables */
+#define alpha2_nmdar alpha2_nmdar_expsyn2c_col4
+ double alpha2_nmdar = 0.17;
 #define alpha_nmdar alpha_nmdar_expsyn2c_col4
- double alpha_nmdar = 0.34;
+ double alpha_nmdar = 0.17;
 #define alpha_ampar alpha_ampar_expsyn2c_col4
  double alpha_ampar = 2;
 #define beta_nmdar beta_nmdar_expsyn2c_col4
@@ -178,6 +180,7 @@ extern int nrn_get_mechtype();
  "beta_ampar_expsyn2c_col4", "1/ms",
  "k_nmdar_expsyn2c_col4", "1/ms",
  "alpha_nmdar_expsyn2c_col4", "1/ms",
+ "alpha2_nmdar_expsyn2c_col4", "1/ms",
  "beta_nmdar_expsyn2c_col4", "1/ms",
  "f_expsyn2c_col4", "coulomb",
  "rtof_expsyn2c_col4", "mV",
@@ -220,6 +223,7 @@ extern int nrn_get_mechtype();
  "beta_ampar_expsyn2c_col4", &beta_ampar_expsyn2c_col4,
  "k_nmdar_expsyn2c_col4", &k_nmdar_expsyn2c_col4,
  "alpha_nmdar_expsyn2c_col4", &alpha_nmdar_expsyn2c_col4,
+ "alpha2_nmdar_expsyn2c_col4", &alpha2_nmdar_expsyn2c_col4,
  "beta_nmdar_expsyn2c_col4", &beta_nmdar_expsyn2c_col4,
  "tmp_expsyn2c_col4", &tmp_expsyn2c_col4,
  "f_expsyn2c_col4", &f_expsyn2c_col4,
@@ -379,7 +383,7 @@ static double _hoc_seed(_vptr) void* _vptr; {
    Dampar_bound = - k_ampar * ampar_bound - beta_ampar * ampar_bound + alpha_ampar * ampar_active ;
    Dampar_active = beta_ampar * ampar_bound - alpha_ampar * ampar_active ;
    Dnmdar_bound = - k_nmdar * nmdar_bound - beta_nmdar * nmdar_bound + alpha_nmdar * nmdar_active ;
-   Dnmdar_active = beta_nmdar * nmdar_bound - alpha_nmdar * nmdar_active ;
+   Dnmdar_active = beta_nmdar * nmdar_bound - alpha_nmdar * nmdar_active - alpha2_nmdar * nmdar_active ;
    }
  return _reset;
 }
@@ -387,7 +391,7 @@ static double _hoc_seed(_vptr) void* _vptr; {
  Dampar_bound = Dampar_bound  / (1. - dt*( (- k_ampar)*(1.0) - (beta_ampar)*(1.0) )) ;
  Dampar_active = Dampar_active  / (1. - dt*( ( - (alpha_ampar)*(1.0) ) )) ;
  Dnmdar_bound = Dnmdar_bound  / (1. - dt*( (- k_nmdar)*(1.0) - (beta_nmdar)*(1.0) )) ;
- Dnmdar_active = Dnmdar_active  / (1. - dt*( ( - (alpha_nmdar)*(1.0) ) )) ;
+ Dnmdar_active = Dnmdar_active  / (1. - dt*( ( - (alpha_nmdar)*(1.0) ) - (alpha2_nmdar)*(1.0) )) ;
 }
  /*END CVODE*/
  static int state () {_reset=0;
@@ -395,7 +399,7 @@ static double _hoc_seed(_vptr) void* _vptr; {
     ampar_bound = ampar_bound + (1. - exp(dt*((- k_ampar)*(1.0) - (beta_ampar)*(1.0))))*(- ( (alpha_ampar)*(ampar_active) ) / ( (- k_ampar)*(1.0) - (beta_ampar)*(1.0) ) - ampar_bound) ;
     ampar_active = ampar_active + (1. - exp(dt*(( - (alpha_ampar)*(1.0) ))))*(- ( (beta_ampar)*(ampar_bound) ) / ( ( - (alpha_ampar)*(1.0)) ) - ampar_active) ;
     nmdar_bound = nmdar_bound + (1. - exp(dt*((- k_nmdar)*(1.0) - (beta_nmdar)*(1.0))))*(- ( (alpha_nmdar)*(nmdar_active) ) / ( (- k_nmdar)*(1.0) - (beta_nmdar)*(1.0) ) - nmdar_bound) ;
-    nmdar_active = nmdar_active + (1. - exp(dt*(( - (alpha_nmdar)*(1.0) ))))*(- ( (beta_nmdar)*(nmdar_bound) ) / ( ( - (alpha_nmdar)*(1.0)) ) - nmdar_active) ;
+    nmdar_active = nmdar_active + (1. - exp(dt*(( - (alpha_nmdar)*(1.0) ) - (alpha2_nmdar)*(1.0))))*(- ( (beta_nmdar)*(nmdar_bound) ) / ( ( - (alpha_nmdar)*(1.0)) - (alpha2_nmdar)*(1.0) ) - nmdar_active) ;
    }
   return 0;
 }
@@ -412,8 +416,8 @@ static _net_receive (_pnt, _args, _lflag) Point_process* _pnt; double* _args; do
      printf ( "%s %f %s %f\n" , "pr1: " , pr1 , "pr2: " , pr2 ) ;
      if ( pr2 < pr1 ) {
        ampar_bound = ampar_bound + 0.6 * ampar_unbound ;
-       nmdar_bound = nmdar_bound + 0.6 * nmdar_unbound ;
-       printf ( "%s %f %s %f %s %f\n" , "stim_index: " , stim_index , "ampar_unbound: " , ampar_unbound , "nmdar_unbound: " , nmdar_unbound ) ;
+       nmdar_bound = nmdar_bound + 0.8 * nmdar_unbound ;
+       printf ( "%s %f %s %f %s %f  %s %f %s %f %s %f\n" , "stim_index: " , stim_index , "ampar_unbound: " , ampar_unbound , "nmdar_unbound: " , nmdar_unbound , "ampar_active: " , ampar_active , "nmdar_active: " , nmdar_active , "ampar_bound: " , ampar_bound ) ;
        }
      if ( stim_index <= tot_num - 2.0 ) {
        if ( stim_index > 0.0  && fmod ( stim_index + 1.0 , num )  == 0.0 ) {
@@ -709,7 +713,7 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
  { {
  for (; t < _break; t += dt) {
  error =  state();
- if(error){fprintf(stderr,"at line 130 in file expsyn2c_col4.mod:\n		SOLVE state METHOD cnexp\n"); nrn_complain(_p); abort_run(error);}
+ if(error){fprintf(stderr,"at line 131 in file expsyn2c_col4.mod:\n		SOLVE state METHOD cnexp\n"); nrn_complain(_p); abort_run(error);}
  
 }}
  t = _save;

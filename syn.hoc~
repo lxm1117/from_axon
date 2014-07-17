@@ -52,10 +52,6 @@ forall{
 	kbath_kext=ko0_k_ion
 } 
 
-forsec "sp" {
-	uninsert kext
-	uninsert kextna1
-}
 /*
 objref slist
 slist=new SectionList()
@@ -388,31 +384,39 @@ proc data_record(){local k
 	}	
 	
 
-	inmdar_ca_syn[0].record(&syn[3].inmdar_ca)
-	v_syn[0].record(&sph_y106_L169_T4_d14_R153_B154_Adend_apical.v(0.5))
+	inmdar_ca_syn[1].record(&syn[3].inmdar_ca)
+	v_syn[1].record(&sph_y106_L169_T4_d14_R153_B154_Adend_apical.v(0.5))
 
-	inmdar_ca_syn[1].record(&syn[23].inmdar_ca)
-	v_syn[1].record(&sph_y148_L390_T4_d4_R240_B241_Adend_apical.v(0.5))
+	inmdar_ca_syn[2].record(&syn[23].inmdar_ca)
+	v_syn[2].record(&sph_y148_L390_T4_d4_R240_B241_Adend_apical.v(0.5))
 
-	inmdar_ca_syn[2].record(&syn[41].inmdar_ca)
-	v_syn[2].record(&sph_y293_L487_T4_d20_R302_B303_Adend_apical.v(0.5))
+	inmdar_ca_syn[3].record(&syn[41].inmdar_ca)
+	v_syn[3].record(&sph_y293_L487_T4_d20_R302_B303_Adend_apical.v(0.5))
 
-	inmdar_ca_syn[3].record(&syn[44].inmdar_ca)
-	v_syn[3].record(&sph_y353_L550_T4_d20_R310_B311_Adend_apical.v(0.5))
+	inmdar_ca_syn[4].record(&syn[44].inmdar_ca)
+	v_syn[4].record(&sph_y353_L550_T4_d20_R310_B311_Adend_apical.v(0.5))
 
-	inmdar_ca_syn[4].record(&syn[79].inmdar_ca)
-	v_syn[4].record(&sph_y389_L618_T4_d4_R1761_B1762_Adend_apical.v(0.5))
+	inmdar_ca_syn[5].record(&syn[79].inmdar_ca)
+	v_syn[5].record(&sph_y389_L618_T4_d4_R1761_B1762_Adend_apical.v(0.5))
 
-	inmdar_ca_syn[5].record(&syn[150].inmdar_ca)
-	v_syn[5].record(&sph_y282_L567_T4_d4_R2065_B2066_Adend_apical.v(0.5))
+	inmdar_ca_syn[6].record(&syn[150].inmdar_ca)
+	v_syn[6].record(&sph_y282_L567_T4_d4_R2065_B2066_Adend_apical.v(0.5))
 
-	inmdar_ca_syn[6].record(&syn[158].inmdar_ca)
-	v_syn[6].record(&sph_y172_L335_T4_d4_R2092_B2093_Adend_apical.v(0.5))
+	inmdar_ca_syn[7].record(&syn[158].inmdar_ca)
+	v_syn[7].record(&sph_y172_L335_T4_d4_R2092_B2093_Adend_apical.v(0.5))
 
-	inmdar_ca_syn[7].record(&syn[159].inmdar_ca)
-	v_syn[7].record(&sph_y138_L376_T4_d4_R2100_B2101_Adend_apical.v(0.5))
+	inmdar_ca_syn[8].record(&syn[159].inmdar_ca)
+	v_syn[8].record(&sph_y138_L376_T4_d4_R2100_B2101_Adend_apical.v(0.5))
+
 
 	timevec.record(&t)
+}
+proc data_save(){
+	vecsave(soma_cai, "soma_cai.dat")
+	vecsave(soma_ica, "soma_ica.dat")
+	vecsave(soma_v, "soma_v.dat")
+	vecsave(inmdar_ca_syn, "inmdar_ca_syn.dat")
+	vecsave(v_syn, "v_syn.data")
 }
 
 
@@ -427,23 +431,6 @@ proc vecsave() {local k localobj vec, file
 		file.printf("%f\t %f\n", timevec.x[k], vec.x[k])
 	}
 	file.close()
-}
-
-strdef filename
-proc data_save(){
-	
-	vecsave(soma_cai, "soma_cai.dat")
-	vecsave(soma_ica, "soma_ica.dat")
-	vecsave(soma_v, "soma_v.dat")
-	
-	for k=0,7{
-		sprint(filename, "inmdar_ca_syn[%d].dat", k)
-		vecsave(inmdar_ca_syn[k], filename)
-	}
-	for k=0,7{
-		sprint(filename, "v_syn[%d].dat", k)
-		vecsave(v_syn[k], filename)
-	}
 }
 
 

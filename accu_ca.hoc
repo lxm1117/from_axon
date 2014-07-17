@@ -1,0 +1,53 @@
+objref vec_acc, vec, vec_t
+obfunc accu_ca(){local k localobj vec //, vec_acc
+	vec=$o1
+	vec_acc=new Vector(vec.size())
+	vec_acc.x[0]=vec.x[0]
+	for k=1, vec.size()-1 {
+		vec_acc.x[k]=vec.x[k]+vec_acc.x[k-1]
+	}
+	return vec_acc
+}
+
+obfunc read_dat() {local i, vecsize 	localobj file
+	file=new File()
+	file.ropen($s1)
+	vecsize=file.scanvar()
+
+	vec=$o2
+	vec=new Vector(vecsize)
+	vec_t=new Vector(vecsize)
+
+	i=0
+	while(i<vecsize){
+		vec_t.x[i]=file.scanvar()
+		vec.x[i]=file.scanvar()
+		i=i+1
+	}
+	
+	file.close()
+	return vec
+}
+
+objref ca_syn[8],ca_acc_syn[8],v_syn[8], g0, g1
+
+strdef filename
+proc datplot(){local k 
+	g0 = $o1
+	g1 = $o2
+	g0 = new Graph()
+	g1 = new Graph()
+	
+	for k=0,7{		
+		sprint(filename, "inmdar_ca_syn[%d].dat", k)
+		ca_syn[k]=read_dat(filename, ca_syn[k])
+		ca_acc_syn[k]=accu_ca(ca_syn[k])
+	        ca_acc_syn[k].plot(g0,vec_t,k,1)
+ 	
+		sprint(filename, "v_syn[%d].dat", k)
+		v_syn[k]=read_dat(filename, v_syn[k])
+		v_syn[k].plot(g1,vec_t,k,1)
+	}
+
+	
+} 
