@@ -49,5 +49,25 @@ proc datplot(){local k
 		v_syn[k].plot(g1,vec_t,k,1)
 	}
 
+}
+
+proc vecsave() {local k localobj vectmp, file
+	vectmp=$o1
+	file=new File()
+	file.wopen($s2)
+
+	file.printf("label: %s\n", $s2)
+	file.printf("%d\n", vectmp.size())
+	for k=0, vectmp.size()-1{
+		file.printf("%f\t %f\n", vec_t.x[k], vectmp.x[k])
+	}
+	file.close()
+}
+proc save_accu(){local k
 	
+	for k=0,7{
+		sprint(filename, "ca_acc_syn[%d].dat", k)
+		vecsave(ca_acc_syn[k], filename)		
+	}
+
 } 
