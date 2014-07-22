@@ -2,33 +2,33 @@ load '/home/neuro/gnuplot-colorbrewer/qualitative/Set2.plt'
 plot "soma_v.dat" u 1:2 w lines ls 1 lw 1.5 title 'soma v'
 set ylabel ("soma voltage (mV)")
 set xlabel ("time (ms)")
-set xrange [0:1800]
+set xrange [0:4800]
 set yrange [-80:60]
 set output 'soma_v.png'
-set terminal pngcairo size 1024, 343 enhanced font 'Verdana,10'
+set terminal pngcairo size 1024, 343 enhanced font 'Verdana,15'
 replot
 
 plot "ca_acc_soma_burst.dat" u 1:2 w lines ls 2 lw 1.8 title 'soma ca2+ inflx burst',\
-     "ca_acc_soma_tetanus.dat" u 1:2 w lines ls 9 lw 1.8 title 'soma ca2+ inflx tetanus'
-set ylabel ("accumulated ca2+ influx (uC/cm2)")
+     "ca_acc_soma_tetanus.dat" u 1:2 w lines ls 3 lw 1.8 title 'soma ca2+ inflx tetanus'
+set ylabel ("accumulated ca2+ (uC/cm2)")
 set xlabel ("time (ms)")
-set xrange [0:1800]
+set xrange [0:4800]
 set yrange [-85:0]
 set output 'soma_ca_t_b.png'
-set terminal pngcairo size 1024, 343 enhanced font 'Verdana,10'
+#set terminal pngcairo size 1024, 343 enhanced font 'Verdana,14'
 replot
 
 plot 	"v_syn[0].dat" u 1:2 w lines ls 2 lw 1.5 title 'syn1 v',\
 	"v_syn[1].dat" u 1:2 w lines ls 3 lw 1.5 title 'syn2 v',\
-	"v_syn[5].dat" u 1:2 w lines ls 6 lw 1.5 title 'syn6 v',\
+	"v_syn[5].dat" u 1:2 w lines ls 7 lw 1.5 title 'syn6 v',\
 	"v_syn[7].dat" u 1:2 w lines ls 9 lw 1.5 title 'syn8 v',\
 	"soma_v.dat" u 1:2 w lines ls 1 lw 1.5 title 'soma v'
 set ylabel ("synapse voltage (mV)")
 set xlabel ("time (ms)")
-set xrange [400:800]
+set xrange [1300:2000]
 set yrange [-80:60]
 set output 'syn_v.png'
-#set terminal pngcairo size 1024, 343 enhanced font 'Verdana,10'
+#set terminal pngcairo size 1024, 343 enhanced font 'Verdana,14'
 replot
 #set terminal X11
 
@@ -36,13 +36,13 @@ plot 	"ca_acc_syn[0].dat" u 1:2 w lines ls 2 lw 1.5 title 'syn1 ca2+ inflx',\
 	"ca_acc_syn[1].dat" u 1:2 w lines ls 3 lw 1.5 title 'syn2 ca2+ inflx',\
 	"ca_acc_syn[2].dat" u 1:2 w lines ls 4 lw 1.5 title 'syn3 ca2+ inflx',\
 	"ca_acc_syn[3].dat" u 1:2 w lines ls 5 lw 1.5 title 'syn4 ca2+ inflx',\
-	"ca_acc_syn[4].dat" u 1:2 w lines ls 7 lw 1.5 title 'syn5 ca2+ inflx',\
-	"ca_acc_syn[5].dat" u 1:2 w lines ls 6 lw 1.5 title 'syn6 ca2+ inflx',\
+	"ca_acc_syn[4].dat" u 1:2 w lines ls 6 lw 1.5 title 'syn5 ca2+ inflx',\
+	"ca_acc_syn[5].dat" u 1:2 w lines ls 7 lw 1.5 title 'syn6 ca2+ inflx',\
 	"ca_acc_syn[6].dat" u 1:2 w lines ls 8 lw 1.5 title 'syn7 ca2+ inflx',\
 	"ca_acc_syn[7].dat" u 1:2 w lines ls 9 lw 1.5 title 'syn8 ca2+ inflx'
-set ylabel ("accumulated ca2+ influx (uC/cm2)")
+set ylabel ("accumulated ca2+ (uC/cm2)")
 set xlabel ("time (ms)")
-set xrange [0:1800]
+set xrange [0:4800]
 set yrange [-10:0]
 set out 'syn_ca_acc.png'
 replot
@@ -51,13 +51,22 @@ plot 	"inmdar_ca_syn[0].dat" u 1:2 w lines ls 2 lw 1.5 title 'syn1 ica2+',\
 	"inmdar_ca_syn[1].dat" u 1:2 w lines ls 3 lw 1.5 title 'syn2 ica2+',\
 	"inmdar_ca_syn[2].dat" u 1:2 w lines ls 4 lw 1.5 title 'syn3 ica2+',\
 	"inmdar_ca_syn[3].dat" u 1:2 w lines ls 5 lw 1.5 title 'syn4 ica2+',\
-	"inmdar_ca_syn[4].dat" u 1:2 w lines ls 7 lw 1.5 title 'syn5 ica2+',\
-	"inmdar_ca_syn[5].dat" u 1:2 w lines ls 6 lw 1.5 title 'syn6 ica2+',\
+	"inmdar_ca_syn[4].dat" u 1:2 w lines ls 6 lw 1.5 title 'syn5 ica2+',\
+	"inmdar_ca_syn[5].dat" u 1:2 w lines ls 7 lw 1.5 title 'syn6 ica2+',\
 	"inmdar_ca_syn[6].dat" u 1:2 w lines ls 8 lw 1.5 title 'syn7 ica2+',\
 	"inmdar_ca_syn[7].dat" u 1:2 w lines ls 9 lw 1.5 title 'syn8 ica2+'
 set ylabel ("ca2+ current (mA/cm2)")
 set xlabel ("time (ms)")
-set xrange [0:1800]
+set xrange [0:4800]
 set yrange [-0.0005:0.00001]
 set out 'syn_ca.png'
 replot
+
+plot 	"soma_cai_avg_burst.dat" u 1:2 w lines ls 2 lw 1.8 title 'soma cai avg',\
+	"soma_cai_avg_burst.dat" u 1:3 w lines ls 3 lw 1.8 title 'soma cai'
+set ylabel ("soma ca2+ concentration")
+set xlabel ("time (ms)")
+set xrange [0:4800]
+set yrange [0:1]
+set out 'soma_cai_avg_burst.png'
+replot	

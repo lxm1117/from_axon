@@ -133,9 +133,9 @@ extern int nrn_get_mechtype();
  extern double randGen();
  /* declare global and static user variables */
 #define alpha2_nmdar alpha2_nmdar_expsyn2c_col4
- double alpha2_nmdar = 0.17;
+ double alpha2_nmdar = 0.14;
 #define alpha_nmdar alpha_nmdar_expsyn2c_col4
- double alpha_nmdar = 0.17;
+ double alpha_nmdar = 0.2;
 #define alpha_ampar alpha_ampar_expsyn2c_col4
  double alpha_ampar = 2;
 #define beta_nmdar beta_nmdar_expsyn2c_col4

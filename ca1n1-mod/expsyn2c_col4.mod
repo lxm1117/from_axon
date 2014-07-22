@@ -41,8 +41,8 @@ PARAMETER {
 	alpha_ampar=2    (1/ms)
 	beta_ampar=2     (1/ms)
 	k_nmdar=0.02     (1/ms)
-	alpha_nmdar=0.17 (1/ms) :0.34 (1/ms)
-	alpha2_nmdar=0.17 (1/ms)
+	alpha_nmdar=0.2 (1/ms) :0.34 (1/ms)
+	alpha2_nmdar=0.14 (1/ms)
 	beta_nmdar=0.6(1/ms)
 	tmp
 	:f=FARADAY/1000		  (coulomb)	

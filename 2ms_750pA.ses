@@ -8,7 +8,7 @@ objectvar ocbox_, ocbox_list_, scene_, scene_list_
 save_window_ = new Graph(0)
 save_window_.size(0,1000,-80,60)
 scene_vector_[2] = save_window_
-{save_window_.view(0, -80, 1000, 140, 349, 81, 1221.12, 218.56)}
+{save_window_.view(0, -80, 1000, 140, 340, 73, 1221.12, 218.56)}
 graphList[0].append(save_window_)
 save_window_.save_name("graphList[0].")
 save_window_.addexpr("axon_iseg[1].v(0.5)", 2, 1, 0.793421, 0.988359, 2)
@@ -18,7 +18,7 @@ save_window_.addexpr("soma.v(0.5)", 3, 1, 0.795614, 0.988359, 2)
 save_window_ = new Graph(0)
 save_window_.size(0,660,0,1)
 scene_vector_[3] = save_window_
-{save_window_.view(0, 0, 660, 1, 643, 117, 961.92, 300.16)}
+{save_window_.view(0, 0, 660, 1, 634, 109, 961.92, 300.16)}
 graphList[2].append(save_window_)
 save_window_.save_name("graphList[2].")
 save_window_.addexpr("soma.n_Naf_i0", 3, 1, 0.8, 0.9, 2)
@@ -99902,10 +99902,10 @@ objref ocbox_
 
 {
 save_window_ = new PlotShape(0)
-save_window_.size(-296.285,437.251,-80.5509,502.878)
+save_window_.size(-296.285,437.251,-80.5508,502.878)
 save_window_.variable("v")
 scene_vector_[5] = save_window_
-{save_window_.view(-296.285, -80.5509, 733.536, 583.429, 0, 0, 648.96, 516.16)}
+{save_window_.view(-296.285, -80.5508, 733.536, 583.429, 0, 0, 648.96, 516.16)}
 fast_flush_list.append(save_window_)
 save_window_.save_name("fast_flush_list.")
 }
@@ -99922,7 +99922,7 @@ xvalue("Continue for","runStopIn", 1,"{continuerun(t + runStopIn) stoprun=1}", 1
 xbutton("Single Step","steprun()")
 t = 650
 xvalue("t","t", 2 )
-tstop = 650
+tstop = 1000
 xvalue("Tstop","tstop", 1,"tstop_changed()", 0, 1 )
 dt = 0.01
 xvalue("dt","dt", 1,"setdt()", 0, 1 )
@@ -99932,13 +99932,13 @@ screen_update_invl = 0.05
 xvalue("Scrn update invl","screen_update_invl", 1,"", 0, 1 )
 realtime = 419.66
 xvalue("Real Time","realtime", 0,"", 0, 1 )
-xpanel(53,560)
+xpanel(44,560)
 }
 {
 save_window_ = new Graph(0)
-save_window_.size(9.1,111.1,-0.00797167,0.00481167)
+save_window_.size(9.1,111.1,-0.00797167,0.00481163)
 scene_vector_[6] = save_window_
-{save_window_.view(9.1, -0.00797167, 102, 0.0127833, 848, 747, 988.8, 346.24)}
+{save_window_.view(9.1, -0.00797167, 102, 0.0127833, 839, 739, 988.8, 346.24)}
 graphList[2].append(save_window_)
 save_window_.save_name("graphList[2].")
 save_window_.addexpr("syn[3].iampar", 2, 1, 0.8, 0.9, 2)
@@ -99962,7 +99962,7 @@ save_window_.addexpr("syn[159].inmdar", 3, 1, 0.8, 0.9, 2)
 save_window_ = new Graph(0)
 save_window_.size(0,1000,-80,60)
 scene_vector_[7] = save_window_
-{save_window_.view(0, -80, 1000, 140, 258, 228, 1227.84, 305.92)}
+{save_window_.view(0, -80, 1000, 140, 249, 220, 1227.84, 305.92)}
 graphList[0].append(save_window_)
 save_window_.save_name("graphList[0].")
 save_window_.addexpr("sph_y106_L169_T4_d14_R153_B154_Adend_apical.v(0.5)", 1, 1, 0.8, 0.9, 2)
@@ -99978,7 +99978,7 @@ save_window_.addexpr("sph_y138_L376_T4_d4_R2100_B2101_Adend_apical.v(0.5)", 9, 1
 save_window_ = new Graph(0)
 save_window_.size(0,1000,0,20)
 scene_vector_[8] = save_window_
-{save_window_.view(0, 0, 1000, 20, 123, 149, 1056.96, 536.32)}
+{save_window_.view(0, 0, 1000, 20, 114, 141, 1056.96, 536.32)}
 graphList[2].append(save_window_)
 save_window_.save_name("graphList[2].")
 save_window_.addexpr("syn[3].nmdar_unbound", 3, 1, 0.8, 0.9, 2)

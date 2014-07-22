@@ -29,7 +29,7 @@ obfunc read_dat() {local i, vecsize 	localobj file
 	return vec
 }
 
-objref ca_syn[8],ca_acc_syn[8],v_syn[8], g0, g1
+objref ca_syn[8],ca_acc_syn[8],v_syn[8], ca_soma, ca_acc_soma, g0, g1
 
 strdef filename
 proc datplot(){local k 
@@ -48,7 +48,8 @@ proc datplot(){local k
 		v_syn[k]=read_dat(filename, v_syn[k])
 		v_syn[k].plot(g1,vec_t,k,1)
 	}
-
+	ca_soma=read_dat("soma_ica.dat", ca_soma)
+	ca_acc_soma=accu_ca(ca_soma)
 }
 
 proc vecsave() {local k localobj vectmp, file
@@ -69,5 +70,5 @@ proc save_accu(){local k
 		sprint(filename, "ca_acc_syn[%d].dat", k)
 		vecsave(ca_acc_syn[k], filename)		
 	}
-
+	vecsave(ca_acc_soma, "ca_acc_soma.dat")
 } 
