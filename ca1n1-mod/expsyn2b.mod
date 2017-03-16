@@ -108,7 +108,6 @@ NET_RECEIVE( weight (uS)) { :not sure how to write the arguments here, weight or
 		pr2=scop_random()		
 
 		printf("%s %f %s %f %s %f %s %f\n", "+++++pr1: ", pr1, "pr2: ", pr2, "t0: ", t0, "index: ", index)
-		
 
 		if(pr2>pr1){
 			gmax=1

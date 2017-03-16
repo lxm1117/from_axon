@@ -3,23 +3,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "scoplib.h"
+#include "scoplib_ansi.h"
 #undef PI
- 
+#define nil 0
 #include "md1redef.h"
 #include "section.h"
+#include "nrniv_mf.h"
 #include "md2redef.h"
-
+ 
 #if METHOD3
 extern int _method3;
 #endif
 
+#if !NRNGPU
 #undef exp
 #define exp hoc_Exp
-extern double hoc_Exp();
+extern double hoc_Exp(double);
+#endif
  
 #define _threadargscomma_ /**/
 #define _threadargs_ /**/
+ 
+#define _threadargsprotocomma_ /**/
+#define _threadargsproto_ /**/
  	/*SUPPRESS 761*/
 	/*SUPPRESS 762*/
 	/*SUPPRESS 763*/
@@ -51,29 +57,38 @@ extern double hoc_Exp();
 #define h _mlhh
 #endif
 #endif
+ 
+#if defined(__cplusplus)
+extern "C" {
+#endif
  static int hoc_nrnpointerindex =  -1;
  /* external NEURON variables */
  extern double celsius;
  /* declaration of user functions */
- static int _hoc_Boltz_m1();
- static int _hoc_Boltzmann();
- static int _hoc_Cauchy();
- static int _hoc_ngate_adjust();
- static int _hoc_rates();
+ static void _hoc_Boltz_m1(void);
+ static void _hoc_Boltzmann(void);
+ static void _hoc_Cauchy(void);
+ static void _hoc_ngate_adjust(void);
+ static void _hoc_rates(void);
  static int _mechtype;
-extern int nrn_get_mechtype();
+extern void _nrn_cacheloop_reg(int, int);
+extern void hoc_register_prop_size(int, int, int);
+extern void hoc_register_limits(int, HocParmLimits*);
+extern void hoc_register_units(int, HocParmUnits*);
+extern void nrn_promote(Prop*, int, int);
+extern Memb_func* memb_func;
  extern void _nrn_setdata_reg(int, void(*)(Prop*));
  static void _setdata(Prop* _prop) {
  _p = _prop->param; _ppvar = _prop->dparam;
  }
- static _hoc_setdata() {
- Prop *_prop, *hoc_getdata_range();
+ static void _hoc_setdata() {
+ Prop *_prop, *hoc_getdata_range(int);
  _prop = hoc_getdata_range(_mechtype);
    _setdata(_prop);
- ret(1.);
+ hoc_retpushx(1.);
 }
  /* connect user functions to hoc names */
- static IntFunc hoc_intfunc[] = {
+ static VoidFunc hoc_intfunc[] = {
  "setdata_Ktf_p1", _hoc_setdata,
  "Boltz_m1_Ktf_p1", _hoc_Boltz_m1,
  "Boltzmann_Ktf_p1", _hoc_Boltzmann,
@@ -85,9 +100,9 @@ extern int nrn_get_mechtype();
 #define Boltz_m1 Boltz_m1_Ktf_p1
 #define Boltzmann Boltzmann_Ktf_p1
 #define Cauchy Cauchy_Ktf_p1
- extern double Boltz_m1();
- extern double Boltzmann();
- extern double Cauchy();
+ extern double Boltz_m1( double , double , double );
+ extern double Boltzmann( double , double , double );
+ extern double Cauchy( double , double , double , double );
  /* declare global and static user variables */
 #define h_tauS h_tauS_Ktf_p1
  double h_tauS = 30;
@@ -186,14 +201,20 @@ extern int nrn_get_mechtype();
  0,0,0
 };
  static double _sav_indep;
- static void nrn_alloc(), nrn_init(), nrn_state();
- static void nrn_cur(), nrn_jacob();
+ static void nrn_alloc(Prop*);
+static void  nrn_init(_NrnThread*, _Memb_list*, int);
+static void nrn_state(_NrnThread*, _Memb_list*, int);
+ static void nrn_cur(_NrnThread*, _Memb_list*, int);
+static void  nrn_jacob(_NrnThread*, _Memb_list*, int);
  
-static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
+static int _ode_count(int);
+static void _ode_map(int, double**, double**, double*, Datum*, double*, int);
+static void _ode_spec(_NrnThread*, _Memb_list*, int);
+static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  
 #define _cvode_ieq _ppvar[3]._i
  /* connect range variables in _p that hoc is supposed to know about */
- static char *_mechanism[] = {
+ static const char *_mechanism[] = {
  "6.2.0",
 "Ktf_p1",
  "gbar_Ktf_p1",
@@ -207,10 +228,10 @@ static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
  0};
  static Symbol* _k_sym;
  
-static void nrn_alloc(_prop)
-	Prop *_prop;
-{
-	Prop *prop_ion, *need_memb();
+extern Prop* need_memb(Symbol*);
+
+static void nrn_alloc(Prop* _prop) {
+	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 10, _prop);
  	/*initialize range parameters*/
@@ -227,14 +248,20 @@ static void nrn_alloc(_prop)
  	_ppvar[2]._pval = &prop_ion->param[4]; /* _ion_dikdv */
  
 }
- static _initlists();
+ static void _initlists();
   /* some states have an absolute tolerance */
  static Symbol** _atollist;
  static HocStateTolerance _hoc_state_tol[] = {
  0,0
 };
  static void _update_ion_pointer(Datum*);
- _Ktf_p1_reg() {
+ extern Symbol* hoc_lookup(const char*);
+extern void _nrn_thread_reg(int, int, void(*f)(Datum*));
+extern void _nrn_thread_table_reg(int, void(*)(double*, Datum*, Datum*, _NrnThread*, int));
+extern void hoc_register_tolerance(int, HocStateTolerance*, Symbol***);
+extern void _cvode_abstol( Symbol**, double*, int);
+
+ void _Ktf_p1_reg() {
 	int _vectorized = 0;
   _initlists();
  	ion_reg("k", -10000.);
@@ -243,11 +270,11 @@ static void nrn_alloc(_prop)
  _mechtype = nrn_get_mechtype(_mechanism[1]);
      _nrn_setdata_reg(_mechtype, _setdata);
      _nrn_thread_reg(_mechtype, 2, _update_ion_pointer);
-  hoc_register_dparam_size(_mechtype, 4);
+  hoc_register_prop_size(_mechtype, 10, 4);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Ktf_p1 /home/ximi/Documents/from_axon/ca1n1-mod/x86_64/Ktf_p1.mod\n");
+ 	ivoc_help("help ?1 Ktf_p1 /home/neuro/Documents/from_axon/ca1n1-mod/x86_64/Ktf_p1.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -257,13 +284,14 @@ static char *modelname = "Postassium Channel";
 static int error;
 static int _ninits = 0;
 static int _match_recurse=1;
-static _modl_cleanup(){ _match_recurse=1;}
-static ngate_adjust();
-static rates();
+static void _modl_cleanup(){ _match_recurse=1;}
+static int ngate_adjust();
+static int rates(double);
  
-static int _ode_spec1(), _ode_matsol1();
+static int _ode_spec1(_threadargsproto_);
+/*static int _ode_matsol1(_threadargsproto_);*/
  static int _slist1[2], _dlist1[2];
- static int states();
+ static int states(_threadargsproto_);
  
 /*CVODE*/
  static int _ode_spec1 () {_reset=0;
@@ -278,6 +306,7 @@ static int _ode_spec1(), _ode_matsol1();
  rates ( _threadargscomma_ v ) ;
  Dm = Dm  / (1. - dt*( ( ( ( - 1.0 ) ) ) / m_tau )) ;
  Dh = Dh  / (1. - dt*( ( ( ( - 1.0 ) ) ) / h_tau )) ;
+ return 0;
 }
  /*END CVODE*/
  static int states () {_reset=0;
@@ -289,9 +318,7 @@ static int _ode_spec1(), _ode_matsol1();
   return 0;
 }
  
-static int  rates (  _lv )  
-	double _lv ;
- {
+static int  rates (  double _lv ) {
    double _lq10f ;
  _lq10f = 1.0 / pow( q10 , ( ( celsius - q10ref ) / 10.0 ) ) ;
    if ( needAdj ) {
@@ -306,59 +333,53 @@ static int  rates (  _lv )
    h_tau = _lq10f * h_tau ;
     return 0; }
  
-static int _hoc_rates() {
+static void _hoc_rates(void) {
   double _r;
    _r = 1.;
- rates (  *getarg(1) ) ;
- ret(_r);
+ rates (  *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double Boltzmann (  _lv , _lv5 , _ls )  
-	double _lv , _lv5 , _ls ;
- {
+double Boltzmann (  double _lv , double _lv5 , double _ls ) {
    double _lBoltzmann;
  _lBoltzmann = 1.0 / ( 1.0 + exp ( ( _lv - _lv5 ) / _ls ) ) ;
    
 return _lBoltzmann;
  }
  
-static int _hoc_Boltzmann() {
+static void _hoc_Boltzmann(void) {
   double _r;
-   _r =  Boltzmann (  *getarg(1) , *getarg(2) , *getarg(3) ) ;
- ret(_r);
+   _r =  Boltzmann (  *getarg(1) , *getarg(2) , *getarg(3) );
+ hoc_retpushx(_r);
 }
  
-double Cauchy (  _lv , _la , _lv5 , _ls )  
-	double _lv , _la , _lv5 , _ls ;
- {
+double Cauchy (  double _lv , double _la , double _lv5 , double _ls ) {
    double _lCauchy;
  _lCauchy = _la / ( 1.0 + pow( ( ( _lv - _lv5 ) / _ls ) , 2.0 ) ) ;
    
 return _lCauchy;
  }
  
-static int _hoc_Cauchy() {
+static void _hoc_Cauchy(void) {
   double _r;
-   _r =  Cauchy (  *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) ) ;
- ret(_r);
+   _r =  Cauchy (  *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) );
+ hoc_retpushx(_r);
 }
  
-double Boltz_m1 (  _lx , _lv5 , _ls )  
-	double _lx , _lv5 , _ls ;
- {
+double Boltz_m1 (  double _lx , double _lv5 , double _ls ) {
    double _lBoltz_m1;
  _lBoltz_m1 = _ls * log ( 1.0 / _lx - 1.0 ) + _lv5 ;
    
 return _lBoltz_m1;
  }
  
-static int _hoc_Boltz_m1() {
+static void _hoc_Boltz_m1(void) {
   double _r;
-   _r =  Boltz_m1 (  *getarg(1) , *getarg(2) , *getarg(3) ) ;
- ret(_r);
+   _r =  Boltz_m1 (  *getarg(1) , *getarg(2) , *getarg(3) );
+ hoc_retpushx(_r);
 }
  
-static int  ngate_adjust (  )  {
+static int  ngate_adjust (  ) {
    double _lx1 , _lx2 , _lv1 , _lv2 , _laS , _laV5 ;
  _lx1 = 0.3 ;
    _lx2 = 0.7 ;
@@ -370,16 +391,16 @@ static int  ngate_adjust (  )  {
    m_slopeAdj = _laS - m_slope ;
     return 0; }
  
-static int _hoc_ngate_adjust() {
+static void _hoc_ngate_adjust(void) {
   double _r;
    _r = 1.;
- ngate_adjust (  ) ;
- ret(_r);
+ ngate_adjust (  );
+ hoc_retpushx(_r);
 }
  
-static int _ode_count(_type) int _type;{ return 2;}
+static int _ode_count(int _type){ return 2;}
  
-static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -392,7 +413,7 @@ static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
      _ode_spec1 ();
   }}
  
-static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type; double** _pv, **_pvdot, *_pp, *_atol; Datum* _ppd; { 
+static void _ode_map(int _ieq, double** _pv, double** _pvdot, double* _pp, Datum* _ppd, double* _atol, int _type) { 
  	int _i; _p = _pp; _ppvar = _ppd;
 	_cvode_ieq = _ieq;
 	for (_i=0; _i < 2; ++_i) {
@@ -401,7 +422,7 @@ static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type;
 	}
  }
  
-static int _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -561,9 +582,9 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 
 }
 
-static terminal(){}
+static void terminal(){}
 
-static _initlists() {
+static void _initlists() {
  int _i; static int _first = 1;
   if (!_first) return;
  _slist1[0] = &(m) - _p;  _dlist1[0] = &(Dm) - _p;

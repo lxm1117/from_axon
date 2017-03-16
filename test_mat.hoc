@@ -9,11 +9,11 @@ etr3=new eTrace()
 etr4=new eTrace()
 etr5=new eTrace()
 
-etr1.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",1)
-etr2.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",2)
-etr3.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",3)
-etr4.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",4)
-etr5.load_htf_1p0("/home/neuro/from_axon/2ms+1500pA.htf",5)
+etr1.load_htf_1p0("/home/neuro/Documents/from_axon/2ms+1500pA.htf",1)
+etr2.load_htf_1p0("/home/neuro/Documents/from_axon/2ms+1500pA.htf",2)
+etr3.load_htf_1p0("/home/neuro/Documents/from_axon/2ms+1500pA.htf",3)
+etr4.load_htf_1p0("/home/neuro/Documents/from_axon/2ms+1500pA.htf",4)
+etr5.load_htf_1p0("/home/neuro/Documents/from_axon/2ms+1500pA.htf",5)
 
 emch.Dph_x_sz=5
 emch.Dph_y_sz=50
@@ -62,7 +62,7 @@ func dist() {local i_var, i_tgt, j_var, j_tgt, k, res localobj var, tgt
 	tgt=$o2
 	res=0
         
-        if(var.vec_dv.size==0) {  var.vec_dv=var.deriv(var.vec_v, var.vec_t)  }
+    if(var.vec_dv.size==0) {  var.vec_dv=var.deriv(var.vec_v, var.vec_t)  }
 	if(tgt.vec_dv.size==0) {  tgt.vec_dv=tgt.deriv(tgt.vec_v, tgt.vec_t)  }
 	for k=0, var.vec_t.size-1{
 		i_var=(var.vec_v.x[k]-emch.Dph_x_m)/emch.Dph_x_sz
@@ -99,6 +99,7 @@ objref file, dtr
 file=new File()
 strdef fname
 chdir("/axon/d1/Users/ximing/Projects/ParSims/pDE/dat_files")
+
 fname="2ms+1500pA.dat"
 
 dtr=new datTrace()

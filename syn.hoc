@@ -28,12 +28,16 @@ proc syn_set_col4(){ local k
 
 		k=k+1
 	}
+	print "stim_num: ", $1, " in_grp_stim: ", $2, " ampar: ", $3, " nmdar: ", $4, " int_s:", $5, " int_l:", $6
 }
 
+/*
 forsec "soma" {
-	 insert ca1ca
-	 insert ca1L
+	 //insert ca1ca
+	 insert cal0
+	 insert cad
 }
+*/
 
 actk= 1 //.75
 actna=1  //.75
@@ -42,7 +46,7 @@ nai0_na_ion=10*actna
 nao0_na_ion=145*actna
 ki0_k_ion=140*actk
 ko0_k_ion=2.5*actk
-cai0_ca_ion=2e-5*actca
+cai0_ca_ion=5e-5*actca
 cao0_ca_ion=2*actca
 
 forall insert kext
@@ -78,6 +82,7 @@ forall insert epasn
 stim.amp=0
 stim.dur=0
 tstop=500
+*/
 
 forsec "axon_iseg" {
 	insert kext
@@ -108,8 +113,6 @@ forsec "dend" {
 	insert epasn
 	insert kextna1
 }
-
-*/
 
 proc para_save(){local k localobj file, pvec
 	pvec=new Vector(61)
@@ -343,7 +346,7 @@ proc para_read(){local k localobj pvec, file
 	print "num_tot:", pvec.x[52], "	num:", pvec.x[53], "	ampar_tot:", pvec.x[54], "	nmdar_tot:", pvec.x[55], "	interval_s:", pvec.x[56], "	interval_l:", pvec.x[57]			
 
 	*/
-	syn_set_col4(0,0, pvec.x[56], pvec.x[57],0,0)
+	// syn_set_col4(0,0, pvec.x[56], pvec.x[57],0,0)
 	file.close()
 }
 
@@ -483,3 +486,6 @@ forsec"sph" {
 	}
 	sec=sec+1
 }
+
+//syn_set_col4(25,5,200,10,10,150)
+//K_c_cal0=0.002

@@ -3,23 +3,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "scoplib.h"
+#include "scoplib_ansi.h"
 #undef PI
- 
+#define nil 0
 #include "md1redef.h"
 #include "section.h"
+#include "nrniv_mf.h"
 #include "md2redef.h"
-
+ 
 #if METHOD3
 extern int _method3;
 #endif
 
+#if !NRNGPU
 #undef exp
 #define exp hoc_Exp
-extern double hoc_Exp();
+extern double hoc_Exp(double);
+#endif
  
 #define _threadargscomma_ /**/
 #define _threadargs_ /**/
+ 
+#define _threadargsprotocomma_ /**/
+#define _threadargsproto_ /**/
  	/*SUPPRESS 761*/
 	/*SUPPRESS 762*/
 	/*SUPPRESS 763*/
@@ -75,33 +81,42 @@ extern double hoc_Exp();
 #define h _mlhh
 #endif
 #endif
+ 
+#if defined(__cplusplus)
+extern "C" {
+#endif
  static int hoc_nrnpointerindex =  -1;
  /* external NEURON variables */
  extern double celsius;
  /* declaration of user functions */
- static int _hoc_rates();
- static int _hoc_vtrap();
+ static void _hoc_rates(void);
+ static void _hoc_vtrap(void);
  static int _mechtype;
-extern int nrn_get_mechtype();
+extern void _nrn_cacheloop_reg(int, int);
+extern void hoc_register_prop_size(int, int, int);
+extern void hoc_register_limits(int, HocParmLimits*);
+extern void hoc_register_units(int, HocParmUnits*);
+extern void nrn_promote(Prop*, int, int);
+extern Memb_func* memb_func;
  extern void _nrn_setdata_reg(int, void(*)(Prop*));
  static void _setdata(Prop* _prop) {
  _p = _prop->param; _ppvar = _prop->dparam;
  }
- static _hoc_setdata() {
- Prop *_prop, *hoc_getdata_range();
+ static void _hoc_setdata() {
+ Prop *_prop, *hoc_getdata_range(int);
  _prop = hoc_getdata_range(_mechtype);
    _setdata(_prop);
- ret(1.);
+ hoc_retpushx(1.);
 }
  /* connect user functions to hoc names */
- static IntFunc hoc_intfunc[] = {
+ static VoidFunc hoc_intfunc[] = {
  "setdata_ca1AH", _hoc_setdata,
  "rates_ca1AH", _hoc_rates,
  "vtrap_ca1AH", _hoc_vtrap,
  0, 0
 };
 #define vtrap vtrap_ca1AH
- extern double vtrap();
+ extern double vtrap( double , double );
  /* declare global and static user variables */
 #define adtau adtau_ca1AH
  double adtau = 0;
@@ -173,14 +188,20 @@ extern int nrn_get_mechtype();
  0,0,0
 };
  static double _sav_indep;
- static void nrn_alloc(), nrn_init(), nrn_state();
- static void nrn_cur(), nrn_jacob();
+ static void nrn_alloc(Prop*);
+static void  nrn_init(_NrnThread*, _Memb_list*, int);
+static void nrn_state(_NrnThread*, _Memb_list*, int);
+ static void nrn_cur(_NrnThread*, _Memb_list*, int);
+static void  nrn_jacob(_NrnThread*, _Memb_list*, int);
  
-static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
+static int _ode_count(int);
+static void _ode_map(int, double**, double**, double*, Datum*, double*, int);
+static void _ode_spec(_NrnThread*, _Memb_list*, int);
+static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  
 #define _cvode_ieq _ppvar[3]._i
  /* connect range variables in _p that hoc is supposed to know about */
- static char *_mechanism[] = {
+ static const char *_mechanism[] = {
  "6.2.0",
 "ca1AH",
  "gkAbarp_ca1AH",
@@ -213,10 +234,10 @@ static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
  0};
  static Symbol* _k_sym;
  
-static void nrn_alloc(_prop)
-	Prop *_prop;
-{
-	Prop *prop_ion, *need_memb();
+extern Prop* need_memb(Symbol*);
+
+static void nrn_alloc(Prop* _prop) {
+	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 34, _prop);
  	/*initialize range parameters*/
@@ -244,14 +265,20 @@ static void nrn_alloc(_prop)
  	_ppvar[2]._pval = &prop_ion->param[4]; /* _ion_dikdv */
  
 }
- static _initlists();
+ static void _initlists();
   /* some states have an absolute tolerance */
  static Symbol** _atollist;
  static HocStateTolerance _hoc_state_tol[] = {
  0,0
 };
  static void _update_ion_pointer(Datum*);
- _ca1AH_reg() {
+ extern Symbol* hoc_lookup(const char*);
+extern void _nrn_thread_reg(int, int, void(*f)(Datum*));
+extern void _nrn_thread_table_reg(int, void(*)(double*, Datum*, Datum*, _NrnThread*, int));
+extern void hoc_register_tolerance(int, HocStateTolerance*, Symbol***);
+extern void _cvode_abstol( Symbol**, double*, int);
+
+ void _ca1AH_reg() {
 	int _vectorized = 0;
   _initlists();
  	ion_reg("k", -10000.);
@@ -260,11 +287,11 @@ static void nrn_alloc(_prop)
  _mechtype = nrn_get_mechtype(_mechanism[1]);
      _nrn_setdata_reg(_mechtype, _setdata);
      _nrn_thread_reg(_mechtype, 2, _update_ion_pointer);
-  hoc_register_dparam_size(_mechtype, 4);
+  hoc_register_prop_size(_mechtype, 34, 4);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 ca1AH /home/ximi/Documents/from_axon/ca1n1-mod/x86_64/ca1AH.mod\n");
+ 	ivoc_help("help ?1 ca1AH /home/neuro/Documents/from_axon/ca1n1-mod/x86_64/ca1AH.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -274,12 +301,13 @@ static char *modelname = "ca1AH.mod Conductances for CA1 cells";
 static int error;
 static int _ninits = 0;
 static int _match_recurse=1;
-static _modl_cleanup(){ _match_recurse=1;}
-static rates();
+static void _modl_cleanup(){ _match_recurse=1;}
+static int rates(double);
  
-static int _ode_spec1(), _ode_matsol1();
+static int _ode_spec1(_threadargsproto_);
+/*static int _ode_matsol1(_threadargsproto_);*/
  static int _slist1[5], _dlist1[5];
- static int states();
+ static int states(_threadargsproto_);
  
 /*CVODE*/
  static int _ode_spec1 () {_reset=0;
@@ -300,6 +328,7 @@ static int _ode_spec1(), _ode_matsol1();
  Db = Db  / (1. - dt*( ( ( ( - 1.0 ) ) ) / btau )) ;
  Dqs = Dqs  / (1. - dt*( ( ( ( - 1.0 ) ) ) / qstau )) ;
  Dqf = Dqf  / (1. - dt*( ( ( ( - 1.0 ) ) ) / qftau )) ;
+ return 0;
 }
  /*END CVODE*/
  static int states () {_reset=0;
@@ -314,9 +343,7 @@ static int _ode_spec1(), _ode_matsol1();
   return 0;
 }
  
-static int  rates (  _lv )  
-	double _lv ;
- {
+static int  rates (  double _lv ) {
    double _lq10 , _lalpha , _lbeta ;
  _lq10 = pow( 3.0 , ( ( celsius - 6.3 ) / 10.0 ) ) ;
    _lalpha = - 0.1 * vtrap ( _threadargscomma_ ( _lv + 31.3 ) , - 25.0 ) ;
@@ -350,16 +377,14 @@ static int  rates (  _lv )
      }
     return 0; }
  
-static int _hoc_rates() {
+static void _hoc_rates(void) {
   double _r;
    _r = 1.;
- rates (  *getarg(1) ) ;
- ret(_r);
+ rates (  *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double vtrap (  _lx , _ly )  
-	double _lx , _ly ;
- {
+double vtrap (  double _lx , double _ly ) {
    double _lvtrap;
  if ( fabs ( _lx / _ly ) < 1e-6 ) {
      _lvtrap = _ly * ( 1.0 - _lx / _ly / 2.0 ) ;
@@ -371,15 +396,15 @@ double vtrap (  _lx , _ly )
 return _lvtrap;
  }
  
-static int _hoc_vtrap() {
+static void _hoc_vtrap(void) {
   double _r;
-   _r =  vtrap (  *getarg(1) , *getarg(2) ) ;
- ret(_r);
+   _r =  vtrap (  *getarg(1) , *getarg(2) );
+ hoc_retpushx(_r);
 }
  
-static int _ode_count(_type) int _type;{ return 5;}
+static int _ode_count(int _type){ return 5;}
  
-static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -392,7 +417,7 @@ static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
      _ode_spec1 ();
   }}
  
-static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type; double** _pv, **_pvdot, *_pp, *_atol; Datum* _ppd; { 
+static void _ode_map(int _ieq, double** _pv, double** _pvdot, double* _pp, Datum* _ppd, double* _atol, int _type) { 
  	int _i; _p = _pp; _ppvar = _ppd;
 	_cvode_ieq = _ieq;
 	for (_i=0; _i < 5; ++_i) {
@@ -401,7 +426,7 @@ static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type;
 	}
  }
  
-static int _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -574,9 +599,9 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 
 }
 
-static terminal(){}
+static void terminal(){}
 
-static _initlists() {
+static void _initlists() {
  int _i; static int _first = 1;
   if (!_first) return;
  _slist1[0] = &(ap) - _p;  _dlist1[0] = &(Dap) - _p;

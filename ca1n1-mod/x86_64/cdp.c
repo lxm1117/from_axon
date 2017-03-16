@@ -3,24 +3,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "scoplib.h"
+#include "scoplib_ansi.h"
 #undef PI
- static void _difusfunc();
- 
+#define nil 0
 #include "md1redef.h"
 #include "section.h"
+#include "nrniv_mf.h"
 #include "md2redef.h"
-
+ static void _difusfunc(ldifusfunc2_t, _NrnThread*);
+ 
 #if METHOD3
 extern int _method3;
 #endif
 
+#if !NRNGPU
 #undef exp
 #define exp hoc_Exp
-extern double hoc_Exp();
+extern double hoc_Exp(double);
+#endif
  
 #define _threadargscomma_ /**/
 #define _threadargs_ /**/
+ 
+#define _threadargsprotocomma_ /**/
+#define _threadargsproto_ /**/
  	/*SUPPRESS 761*/
 	/*SUPPRESS 762*/
 	/*SUPPRESS 763*/
@@ -65,24 +71,33 @@ extern double hoc_Exp();
 #define h _mlhh
 #endif
 #endif
+ 
+#if defined(__cplusplus)
+extern "C" {
+#endif
  static int hoc_nrnpointerindex =  -1;
  /* external NEURON variables */
  /* declaration of user functions */
- static int _hoc_factors();
+ static void _hoc_factors(void);
  static int _mechtype;
-extern int nrn_get_mechtype();
+extern void _nrn_cacheloop_reg(int, int);
+extern void hoc_register_prop_size(int, int, int);
+extern void hoc_register_limits(int, HocParmLimits*);
+extern void hoc_register_units(int, HocParmUnits*);
+extern void nrn_promote(Prop*, int, int);
+extern Memb_func* memb_func;
  extern void _nrn_setdata_reg(int, void(*)(Prop*));
  static void _setdata(Prop* _prop) {
  _p = _prop->param; _ppvar = _prop->dparam;
  }
- static _hoc_setdata() {
- Prop *_prop, *hoc_getdata_range();
+ static void _hoc_setdata() {
+ Prop *_prop, *hoc_getdata_range(int);
  _prop = hoc_getdata_range(_mechtype);
    _setdata(_prop);
- ret(1.);
+ hoc_retpushx(1.);
 }
  /* connect user functions to hoc names */
- static IntFunc hoc_intfunc[] = {
+ static VoidFunc hoc_intfunc[] = {
  "setdata_cdp", _hoc_setdata,
  "factors_cdp", _hoc_factors,
  0, 0
@@ -157,15 +172,21 @@ extern int nrn_get_mechtype();
  0,0,0
 };
  static double _sav_indep;
- static void nrn_alloc(), nrn_init(), nrn_state();
- static void nrn_cur(), nrn_jacob();
+ static void nrn_alloc(Prop*);
+static void  nrn_init(_NrnThread*, _Memb_list*, int);
+static void nrn_state(_NrnThread*, _Memb_list*, int);
+ static void nrn_cur(_NrnThread*, _Memb_list*, int);
+static void  nrn_jacob(_NrnThread*, _Memb_list*, int);
  
-static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
+static int _ode_count(int);
+static void _ode_map(int, double**, double**, double*, Datum*, double*, int);
+static void _ode_spec(_NrnThread*, _Memb_list*, int);
+static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  
 #define _cvode_ieq _ppvar[6]._i
- static _ode_synonym();
+ static void _ode_synonym(int, double**, Datum**);
  /* connect range variables in _p that hoc is supposed to know about */
- static char *_mechanism[] = {
+ static const char *_mechanism[] = {
  "6.2.0",
 "cdp",
  "cai0_cdp",
@@ -183,10 +204,10 @@ static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
  static Symbol* _ca_sym;
  static int _type_ica;
  
-static void nrn_alloc(_prop)
-	Prop *_prop;
-{
-	Prop *prop_ion, *need_memb();
+extern Prop* need_memb(Symbol*);
+
+static void nrn_alloc(Prop* _prop) {
+	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 38, _prop);
  	/*initialize range parameters*/
@@ -209,7 +230,7 @@ static void nrn_alloc(_prop)
  	_ppvar[4]._pvoid = (void*)(&(prop_ion->dparam[0]._i)); /* iontype for ca */
  
 }
- static _initlists();
+ static void _initlists();
   /* some states have an absolute tolerance */
  static Symbol** _atollist;
  static HocStateTolerance _hoc_state_tol[] = {
@@ -221,7 +242,13 @@ static void nrn_alloc(_prop)
  0,0
 };
  static void _update_ion_pointer(Datum*);
- _cdp_reg() {
+ extern Symbol* hoc_lookup(const char*);
+extern void _nrn_thread_reg(int, int, void(*f)(Datum*));
+extern void _nrn_thread_table_reg(int, void(*)(double*, Datum*, Datum*, _NrnThread*, int));
+extern void hoc_register_tolerance(int, HocStateTolerance*, Symbol***);
+extern void _cvode_abstol( Symbol**, double*, int);
+
+ void _cdp_reg() {
 	int _vectorized = 0;
   _initlists();
  	ion_reg("ca", -10000.);
@@ -231,14 +258,14 @@ static void nrn_alloc(_prop)
  _mechtype = nrn_get_mechtype(_mechanism[1]);
      _nrn_setdata_reg(_mechtype, _setdata);
      _nrn_thread_reg(_mechtype, 2, _update_ion_pointer);
-  hoc_register_dparam_size(_mechtype, 7);
+  hoc_register_prop_size(_mechtype, 38, 7);
  	nrn_writes_conc(_mechtype, 0);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_synonym(_mechtype, _ode_synonym);
  	hoc_register_ldifus1(_difusfunc);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 cdp /home/ximi/Documents/from_axon/ca1n1-mod/x86_64/cdp.mod\n");
+ 	ivoc_help("help ?1 cdp /home/neuro/Documents/from_axon/ca1n1-mod/x86_64/cdp.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -254,8 +281,8 @@ static char *modelname = "Calcium ion accumulation with longitudinal and radial 
 static int error;
 static int _ninits = 0;
 static int _match_recurse=1;
-static _modl_cleanup(){ _match_recurse=1;}
-static factors();
+static void _modl_cleanup(){ _match_recurse=1;}
+static int factors();
  extern double *_getelm();
  
 #define _MATELM1(_row,_col)	*(_getelm(_row + 1, _col + 1))
@@ -267,11 +294,12 @@ static factors();
  static void* _sparseobj1;
  static void* _cvsparseobj1;
  
-static int _ode_spec1(), _ode_matsol1();
+static int _ode_spec1(_threadargsproto_);
+/*static int _ode_matsol1(_threadargsproto_);*/
  static int _slist1[14], _dlist1[14]; static double *_temp1;
  static int state();
  
-static int  factors (  )  {
+static int  factors (  ) {
    double _lr , _ldr2 ;
  _lr = 1.0 / 2.0 ;
    _ldr2 = _lr / ( 4.0 - 1.0 ) / 2.0 ;
@@ -286,11 +314,11 @@ static int  factors (  )  {
      } }
     return 0; }
  
-static int _hoc_factors() {
+static void _hoc_factors(void) {
   double _r;
    _r = 1.;
- factors (  ) ;
- ret(_r);
+ factors (  );
+ hoc_retpushx(_r);
 }
  
 static int state ()
@@ -567,9 +595,9 @@ _MATELM1(_i + 9, _i + 9) *= ( diam * diam * vrat [ ((int) _i ) ]);  } }
  
 /*CVODE end*/
  
-static int _ode_count(_type) int _type;{ return 14;}
+static int _ode_count(int _type){ return 14;}
  
-static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -586,7 +614,7 @@ static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
   _ion_cai = cai;
   }}
  
-static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type; double** _pv, **_pvdot, *_pp, *_atol; Datum* _ppd; { 
+static void _ode_map(int _ieq, double** _pv, double** _pvdot, double* _pp, Datum* _ppd, double* _atol, int _type) { 
  	int _i; _p = _pp; _ppvar = _ppd;
 	_cvode_ieq = _ieq;
 	for (_i=0; _i < 14; ++_i) {
@@ -594,13 +622,13 @@ static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type;
 		_cvode_abstol(_atollist, _atol, _i);
 	}
  }
- static _ode_synonym(_cnt, _pp, _ppd) int _cnt; double** _pp; Datum** _ppd; { 
+ static void _ode_synonym(int _cnt, double** _pp, Datum** _ppd) { 
  	int _i; 
 	for (_i=0; _i < _cnt; ++_i) {_p = _pp[_i]; _ppvar = _ppd[_i];
  _ion_cai =  ca [ 0 ] ;
  }}
  
-static int _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -631,8 +659,8 @@ static double _difcoef1(int _i, double* _p, Datum* _ppvar, double* _pdvol, doubl
  }else{ *_pdfcdc=0.;}
    return DCa * diam * diam * vrat [ ((int) _i ) ] ;
 }
- static void _difusfunc(_f, _nt) void(*_f)(); _NrnThread* _nt; {int _i;
-  for (_i=0; _i < 4; ++_i) _f(_mechtype, _difcoef1, &_difspace1, _i,  2, 23 , _nt);
+ static void _difusfunc(ldifusfunc2_t _f, _NrnThread* _nt) {int _i;
+  for (_i=0; _i < 4; ++_i) (*_f)(_mechtype, _difcoef1, &_difspace1, _i,  2, 23 , _nt);
  }
 
 static void initmodel() {
@@ -803,9 +831,9 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 
 }
 
-static terminal(){}
+static void terminal(){}
 
-static _initlists() {
+static void _initlists() {
  int _i; static int _first = 1;
   if (!_first) return;
  _slist1[0] = &(pumpca) - _p;  _dlist1[0] = &(Dpumpca) - _p;

@@ -1,0 +1,24 @@
+load_file("1spk-th-102606b-n400-Passive-v8d-reduced.pDE-86.log-cbest.hoc")
+// cell_file_name="/home/neuro/Documents/from_axon/n400td/n400td-pc2-sp-axn.hoc"
+load_file("syn.hoc")
+para_read("para_500ms+200pA_v9.txt)		// can be adjusted in line 350
+syn_set_col4(150,5,200,10,10,250)
+stim.dur=9050
+init() // test whether the model init into steady state 
+soma insert cal0 // check parameters.notes
+soma insert cad
+vhalf_n_cal0=-15
+slope_n_cal0=-4.98
+n_gate_cal0=2
+hill_c_cal0=1
+depth_cad=1
+K_c_cal0=0.002
+
+? how to implement VClamp? http://web.mit.edu/neuron_v7.1/doc/help/neuron/neuron/mech.html#VClamp
+nrn/src/nrnoc/vclmp.mod
+
+# the name of ica_dat file in soma_ic_10sec_150_5_10_250 means syn_set_col4(150,5,,,10,250)
+// generate morphology figure
+nrngui
+load_file("/home/neuro/Downloads/from_axon/n400td/n400td-pc2-sp.hoc")
+load_file("syn_list_n400.hoc")

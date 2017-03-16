@@ -2,7 +2,71 @@
 #include "hocdec.h"
 extern int nrnmpi_myid;
 extern int nrn_nobanner_;
-modl_reg(){
+
+extern void _Ca_reg(void);
+extern void _KA_i0_reg(void);
+extern void _KA_i1_reg(void);
+extern void _KA_n1_reg(void);
+extern void _KAa_i1_reg(void);
+extern void _KDM_i1_reg(void);
+extern void _KDR_b0_reg(void);
+extern void _KDR_i0_reg(void);
+extern void _KDR_i1_reg(void);
+extern void _KDR_mig_reg(void);
+extern void _KDRa_i0_reg(void);
+extern void _KDRa_i1_reg(void);
+extern void _KDRb_i0_reg(void);
+extern void _KDRb_i1_reg(void);
+extern void _KDRc_i1_reg(void);
+extern void _KIR_i0_reg(void);
+extern void _KS1_reg(void);
+extern void _KS2_reg(void);
+extern void _Ktf_p1_reg(void);
+extern void _Naf16_i1_reg(void);
+extern void _Naf_b1_reg(void);
+extern void _Naf_i0_reg(void);
+extern void _Naf_i1_reg(void);
+extern void _Naf_i_tst_reg(void);
+extern void _Nafs_i1_reg(void);
+extern void _Nap_i0_reg(void);
+extern void _aabBK_reg(void);
+extern void _ca1AH_reg(void);
+extern void _ca1AH3_reg(void);
+extern void _ca1AH4_reg(void);
+extern void _ca1L_reg(void);
+extern void _ca1N_reg(void);
+extern void _ca1ca_reg(void);
+extern void _ca1n_reg(void);
+extern void _caL3d_reg(void);
+extern void _cad_reg(void);
+extern void _cal0_reg(void);
+extern void _cal1_reg(void);
+extern void _capump_reg(void);
+extern void _cdp_reg(void);
+extern void _epasn_reg(void);
+extern void _expsyn2b_reg(void);
+extern void _expsyn2b_1_reg(void);
+extern void _expsyn2c_reg(void);
+extern void _expsyn2c_1_reg(void);
+extern void _expsyn2c_col3_reg(void);
+extern void _expsyn2c_col4_reg(void);
+extern void _fK_DR_n1_reg(void);
+extern void _fNa_n1_reg(void);
+extern void _h2_i0_reg(void);
+extern void _h_2t_reg(void);
+extern void _h_i0_reg(void);
+extern void _h_in_reg(void);
+extern void _h_n1_reg(void);
+extern void _ipulse2_reg(void);
+extern void _kext_reg(void);
+extern void _kextna_reg(void);
+extern void _kextna1_reg(void);
+extern void _kextna2_reg(void);
+extern void _morpho_reg(void);
+extern void _pNa_n1_reg(void);
+extern void _passive3_reg(void);
+
+void modl_reg(){
   if (!nrn_nobanner_) if (nrnmpi_myid < 1) {
     fprintf(stderr, "Additional mechanisms from files\n");
 
@@ -42,6 +106,8 @@ modl_reg(){
     fprintf(stderr," ca1n.mod");
     fprintf(stderr," caL3d.mod");
     fprintf(stderr," cad.mod");
+    fprintf(stderr," cal0.mod");
+    fprintf(stderr," cal1.mod");
     fprintf(stderr," capump.mod");
     fprintf(stderr," cdp.mod");
     fprintf(stderr," epasn.mod");
@@ -104,6 +170,8 @@ modl_reg(){
   _ca1n_reg();
   _caL3d_reg();
   _cad_reg();
+  _cal0_reg();
+  _cal1_reg();
   _capump_reg();
   _cdp_reg();
   _epasn_reg();

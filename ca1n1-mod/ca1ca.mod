@@ -19,7 +19,7 @@ UNITS {
 PARAMETER {
 	depth = 1 (um)
       tau = 10 (ms)
-	cai0 = 50e-6 (mM)		: set in hoc
+	cai0 = 50e-6 (mM)		: set in hoc 50nM
 }
 
 ASSIGNED {  ica (mA/cm2) }

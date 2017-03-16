@@ -3,23 +3,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "scoplib.h"
+#include "scoplib_ansi.h"
 #undef PI
- 
+#define nil 0
 #include "md1redef.h"
 #include "section.h"
+#include "nrniv_mf.h"
 #include "md2redef.h"
-
+ 
 #if METHOD3
 extern int _method3;
 #endif
 
+#if !NRNGPU
 #undef exp
 #define exp hoc_Exp
-extern double hoc_Exp();
+extern double hoc_Exp(double);
+#endif
  
 #define _threadargscomma_ _p, _ppvar, _thread, _nt,
 #define _threadargs_ _p, _ppvar, _thread, _nt
+ 
+#define _threadargsprotocomma_ double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt,
+#define _threadargsproto_ double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt
  	/*SUPPRESS 761*/
 	/*SUPPRESS 762*/
 	/*SUPPRESS 763*/
@@ -63,38 +69,47 @@ extern double hoc_Exp();
 #define h _mlhh
 #endif
 #endif
+ 
+#if defined(__cplusplus)
+extern "C" {
+#endif
  static int hoc_nrnpointerindex =  -1;
  static Datum* _extcall_thread;
  static Prop* _extcall_prop;
  /* external NEURON variables */
  /* declaration of user functions */
- static int _hoc_alphae();
- static int _hoc_alphad();
- static int _hoc_alphac();
- static int _hoc_alphab();
- static int _hoc_alphaa();
- static int _hoc_betae();
- static int _hoc_betad();
- static int _hoc_betac();
- static int _hoc_betab();
- static int _hoc_betaa();
- static int _hoc_exponential();
- static int _hoc_f();
- static int _hoc_logistic();
+ static void _hoc_alphae(void);
+ static void _hoc_alphad(void);
+ static void _hoc_alphac(void);
+ static void _hoc_alphab(void);
+ static void _hoc_alphaa(void);
+ static void _hoc_betae(void);
+ static void _hoc_betad(void);
+ static void _hoc_betac(void);
+ static void _hoc_betab(void);
+ static void _hoc_betaa(void);
+ static void _hoc_exponential(void);
+ static void _hoc_f(void);
+ static void _hoc_logistic(void);
  static int _mechtype;
-extern int nrn_get_mechtype();
+extern void _nrn_cacheloop_reg(int, int);
+extern void hoc_register_prop_size(int, int, int);
+extern void hoc_register_limits(int, HocParmLimits*);
+extern void hoc_register_units(int, HocParmUnits*);
+extern void nrn_promote(Prop*, int, int);
+extern Memb_func* memb_func;
  extern void _nrn_setdata_reg(int, void(*)(Prop*));
  static void _setdata(Prop* _prop) {
  _extcall_prop = _prop;
  }
- static _hoc_setdata() {
- Prop *_prop, *hoc_getdata_range();
+ static void _hoc_setdata() {
+ Prop *_prop, *hoc_getdata_range(int);
  _prop = hoc_getdata_range(_mechtype);
    _setdata(_prop);
- ret(1.);
+ hoc_retpushx(1.);
 }
  /* connect user functions to hoc names */
- static IntFunc hoc_intfunc[] = {
+ static VoidFunc hoc_intfunc[] = {
  "setdata_Ca", _hoc_setdata,
  "alphae_Ca", _hoc_alphae,
  "alphad_Ca", _hoc_alphad,
@@ -124,19 +139,19 @@ extern int nrn_get_mechtype();
 #define exponential exponential_Ca
 #define f f_Ca
 #define logistic logistic_Ca
- extern double alphae();
- extern double alphad();
- extern double alphac();
- extern double alphab();
- extern double alphaa();
- extern double betae();
- extern double betad();
- extern double betac();
- extern double betab();
- extern double betaa();
- extern double exponential();
- extern double f();
- extern double logistic();
+ extern double alphae( _threadargsprotocomma_ double );
+ extern double alphad( _threadargsprotocomma_ double );
+ extern double alphac( _threadargsprotocomma_ double );
+ extern double alphab( _threadargsprotocomma_ double );
+ extern double alphaa( _threadargsprotocomma_ double );
+ extern double betae( _threadargsprotocomma_ double );
+ extern double betad( _threadargsprotocomma_ double );
+ extern double betac( _threadargsprotocomma_ double );
+ extern double betab( _threadargsprotocomma_ double );
+ extern double betaa( _threadargsprotocomma_ double );
+ extern double exponential( _threadargsprotocomma_ double , double , double , double );
+ extern double f( _threadargsprotocomma_ double , double , double , double );
+ extern double logistic( _threadargsprotocomma_ double , double , double , double );
  /* declare global and static user variables */
 #define cao cao_Ca
  double cao = 2;
@@ -180,14 +195,20 @@ extern int nrn_get_mechtype();
  0,0,0
 };
  static double _sav_indep;
- static void nrn_alloc(), nrn_init(), nrn_state();
- static void nrn_cur(), nrn_jacob();
+ static void nrn_alloc(Prop*);
+static void  nrn_init(_NrnThread*, _Memb_list*, int);
+static void nrn_state(_NrnThread*, _Memb_list*, int);
+ static void nrn_cur(_NrnThread*, _Memb_list*, int);
+static void  nrn_jacob(_NrnThread*, _Memb_list*, int);
  
-static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
+static int _ode_count(int);
+static void _ode_map(int, double**, double**, double*, Datum*, double*, int);
+static void _ode_spec(_NrnThread*, _Memb_list*, int);
+static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  
 #define _cvode_ieq _ppvar[2]._i
  /* connect range variables in _p that hoc is supposed to know about */
- static char *_mechanism[] = {
+ static const char *_mechanism[] = {
  "6.2.0",
 "Ca",
  "gtcabar_Ca",
@@ -209,10 +230,10 @@ static int _ode_count(), _ode_map(), _ode_spec(), _ode_matsol();
  0};
  static Symbol* _ca_sym;
  
-static void nrn_alloc(_prop)
-	Prop *_prop;
-{
-	Prop *prop_ion, *need_memb();
+extern Prop* need_memb(Symbol*);
+
+static void nrn_alloc(Prop* _prop) {
+	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 23, _prop);
  	/*initialize range parameters*/
@@ -229,14 +250,20 @@ static void nrn_alloc(_prop)
  	_ppvar[1]._pval = &prop_ion->param[4]; /* _ion_dicadv */
  
 }
- static _initlists();
+ static void _initlists();
   /* some states have an absolute tolerance */
  static Symbol** _atollist;
  static HocStateTolerance _hoc_state_tol[] = {
  0,0
 };
  static void _update_ion_pointer(Datum*);
- _Ca_reg() {
+ extern Symbol* hoc_lookup(const char*);
+extern void _nrn_thread_reg(int, int, void(*f)(Datum*));
+extern void _nrn_thread_table_reg(int, void(*)(double*, Datum*, Datum*, _NrnThread*, int));
+extern void hoc_register_tolerance(int, HocStateTolerance*, Symbol***);
+extern void _cvode_abstol( Symbol**, double*, int);
+
+ void _Ca_reg() {
 	int _vectorized = 1;
   _initlists();
  	ion_reg("ca", -10000.);
@@ -245,11 +272,11 @@ static void nrn_alloc(_prop)
  _mechtype = nrn_get_mechtype(_mechanism[1]);
      _nrn_setdata_reg(_mechtype, _setdata);
      _nrn_thread_reg(_mechtype, 2, _update_ion_pointer);
-  hoc_register_dparam_size(_mechtype, 3);
+  hoc_register_prop_size(_mechtype, 23, 3);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Ca /home/ximi/Documents/from_axon/ca1n1-mod/x86_64/Ca.mod\n");
+ 	ivoc_help("help ?1 Ca /home/neuro/Documents/from_axon/ca1n1-mod/x86_64/Ca.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -263,11 +290,12 @@ static char *modelname = "";
 static int error;
 static int _ninits = 0;
 static int _match_recurse=1;
-static _modl_cleanup(){ _match_recurse=1;}
+static void _modl_cleanup(){ _match_recurse=1;}
  
-static int _ode_spec1(), _ode_matsol1();
+static int _ode_spec1(_threadargsproto_);
+/*static int _ode_matsol1(_threadargsproto_);*/
  static int _slist1[6], _dlist1[6];
- static int state();
+ static int state(_threadargsproto_);
  
 /*CVODE*/
  static int _ode_spec1 (double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt) {int _reset = 0; {
@@ -287,6 +315,7 @@ static int _ode_spec1(), _ode_matsol1();
  Dc = Dc  / (1. - dt*( (alphac ( _threadargscomma_ v ))*(( ( - 1.0 ) )) - (betac ( _threadargscomma_ v ))*(1.0) )) ;
  Dd = Dd  / (1. - dt*( (alphad ( _threadargscomma_ v ))*(( ( - 1.0 ) )) - (betad ( _threadargscomma_ v ))*(1.0) )) ;
  De = De  / (1. - dt*( (alphae ( _threadargscomma_ v ))*(( ( - 1.0 ) )) - (betae ( _threadargscomma_ v ))*(1.0) )) ;
+ return 0;
 }
  /*END CVODE*/
  static int state (double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt) { {
@@ -300,199 +329,177 @@ static int _ode_spec1(), _ode_matsol1();
   return 0;
 }
  
-double alphaa ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double alphaa ( _threadargsprotocomma_ double _lv ) {
    double _lalphaa;
  _lalphaa = f ( _threadargscomma_ 2.0 , 0.1 , _lv , 19.26 ) ;
    
 return _lalphaa;
  }
  
-static int _hoc_alphaa() {
+static void _hoc_alphaa(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  alphaa ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  alphaa ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double betaa ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double betaa ( _threadargsprotocomma_ double _lv ) {
    double _lbetaa;
  _lbetaa = exponential ( _threadargscomma_ 0.009 , - 0.045393 , _lv , 0.0 ) ;
    
 return _lbetaa;
  }
  
-static int _hoc_betaa() {
+static void _hoc_betaa(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  betaa ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  betaa ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double alphab ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double alphab ( _threadargsprotocomma_ double _lv ) {
    double _lalphab;
  _lalphab = exponential ( _threadargscomma_ 1e-6 , - 0.061501 , _lv , 0.0 ) ;
    
 return _lalphab;
  }
  
-static int _hoc_alphab() {
+static void _hoc_alphab(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  alphab ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  alphab ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double betab ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double betab ( _threadargsprotocomma_ double _lv ) {
    double _lbetab;
  _lbetab = logistic ( _threadargscomma_ 1.0 , - 0.1 , _lv , 29.79 ) ;
    
 return _lbetab;
  }
  
-static int _hoc_betab() {
+static void _hoc_betab(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  betab ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  betab ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double alphac ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double alphac ( _threadargsprotocomma_ double _lv ) {
    double _lalphac;
  _lalphac = f ( _threadargscomma_ 1.9 , 0.1 , _lv , 19.88 ) ;
    
 return _lalphac;
  }
  
-static int _hoc_alphac() {
+static void _hoc_alphac(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  alphac ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  alphac ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double betac ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double betac ( _threadargsprotocomma_ double _lv ) {
    double _lbetac;
  _lbetac = exponential ( _threadargscomma_ 0.046 , - 0.048239 , _lv , 0.0 ) ;
    
 return _lbetac;
  }
  
-static int _hoc_betac() {
+static void _hoc_betac(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  betac ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  betac ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double alphad ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double alphad ( _threadargsprotocomma_ double _lv ) {
    double _lalphad;
  _lalphad = exponential ( _threadargscomma_ 1.6e-4 , - 0.020661 , _lv , 0.0 ) ;
    
 return _lalphad;
  }
  
-static int _hoc_alphad() {
+static void _hoc_alphad(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  alphad ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  alphad ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double betad ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double betad ( _threadargsprotocomma_ double _lv ) {
    double _lbetad;
  _lbetad = logistic ( _threadargscomma_ 1.0 , - 0.1 , _lv , 39.0 ) ;
    
 return _lbetad;
  }
  
-static int _hoc_betad() {
+static void _hoc_betad(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  betad ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  betad ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double alphae ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double alphae ( _threadargsprotocomma_ double _lv ) {
    double _lalphae;
  _lalphae = f ( _threadargscomma_ 156.9 , 0.1 , _lv , 81.5 ) ;
    
 return _lalphae;
  }
  
-static int _hoc_alphae() {
+static void _hoc_alphae(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  alphae ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  alphae ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double betae ( _p, _ppvar, _thread, _nt, _lv ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lv ;
- {
+double betae ( _threadargsprotocomma_ double _lv ) {
    double _lbetae;
  _lbetae = exponential ( _threadargscomma_ 0.29 , - 0.092081 , _lv , 0.0 ) ;
    
 return _lbetae;
  }
  
-static int _hoc_betae() {
+static void _hoc_betae(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  betae ( _p, _ppvar, _thread, _nt, *getarg(1) ) ;
- ret(_r);
+ _r =  betae ( _p, _ppvar, _thread, _nt, *getarg(1) );
+ hoc_retpushx(_r);
 }
  
-double f ( _p, _ppvar, _thread, _nt, _lA , _lk , _lv , _lD ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lA , _lk , _lv , _lD ;
- {
+double f ( _threadargsprotocomma_ double _lA , double _lk , double _lv , double _lD ) {
    double _lf;
  double _lx ;
   _lx = _lk * ( _lv - _lD ) ;
@@ -506,57 +513,53 @@ double f ( _p, _ppvar, _thread, _nt, _lA , _lk , _lv , _lD ) double* _p; Datum* 
 return _lf;
  }
  
-static int _hoc_f() {
+static void _hoc_f(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  f ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) ) ;
- ret(_r);
+ _r =  f ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) );
+ hoc_retpushx(_r);
 }
  
-double logistic ( _p, _ppvar, _thread, _nt, _lA , _lk , _lv , _lD ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lA , _lk , _lv , _lD ;
- {
+double logistic ( _threadargsprotocomma_ double _lA , double _lk , double _lv , double _lD ) {
    double _llogistic;
   _llogistic = _lA / ( 1.0 + exp ( _lk * ( _lv - _lD ) ) ) ;
     
 return _llogistic;
  }
  
-static int _hoc_logistic() {
+static void _hoc_logistic(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  logistic ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) ) ;
- ret(_r);
+ _r =  logistic ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) );
+ hoc_retpushx(_r);
 }
  
-double exponential ( _p, _ppvar, _thread, _nt, _lA , _lk , _lv , _lD ) double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt; 
-	double _lA , _lk , _lv , _lD ;
- {
+double exponential ( _threadargsprotocomma_ double _lA , double _lk , double _lv , double _lD ) {
    double _lexponential;
   _lexponential = _lA * exp ( _lk * ( _lv - _lD ) ) ;
     
 return _lexponential;
  }
  
-static int _hoc_exponential() {
+static void _hoc_exponential(void) {
   double _r;
    double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
    if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
   _thread = _extcall_thread;
   _nt = nrn_threads;
- _r =  exponential ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) ) ;
- ret(_r);
+ _r =  exponential ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) , *getarg(3) , *getarg(4) );
+ hoc_retpushx(_r);
 }
  
-static int _ode_count(_type) int _type;{ return 6;}
+static int _ode_count(int _type){ return 6;}
  
-static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    double* _p; Datum* _ppvar; Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -568,7 +571,7 @@ static int _ode_spec(_NrnThread* _nt, _Memb_list* _ml, int _type) {
      _ode_spec1 (_p, _ppvar, _thread, _nt);
   }}
  
-static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type; double** _pv, **_pvdot, *_pp, *_atol; Datum* _ppd; { 
+static void _ode_map(int _ieq, double** _pv, double** _pvdot, double* _pp, Datum* _ppd, double* _atol, int _type) { 
 	double* _p; Datum* _ppvar;
  	int _i; _p = _pp; _ppvar = _ppd;
 	_cvode_ieq = _ieq;
@@ -578,7 +581,7 @@ static int _ode_map(_ieq, _pv, _pvdot, _pp, _ppd, _atol, _type) int _ieq, _type;
 	}
  }
  
-static int _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
+static void _ode_matsol(_NrnThread* _nt, _Memb_list* _ml, int _type) {
    double* _p; Datum* _ppvar; Datum* _thread;
    Node* _nd; double _v; int _iml, _cntml;
   _cntml = _ml->_nodecount;
@@ -744,9 +747,9 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 
 }
 
-static terminal(){}
+static void terminal(){}
 
-static _initlists(){
+static void _initlists(){
  double _x; double* _p = &_x;
  int _i; static int _first = 1;
   if (!_first) return;
@@ -758,3 +761,7 @@ static _initlists(){
  _slist1[5] = &(e) - _p;  _dlist1[5] = &(De) - _p;
 _first = 0;
 }
+
+#if defined(__cplusplus)
+} /* extern "C" */
+#endif

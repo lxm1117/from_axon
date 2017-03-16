@@ -3,23 +3,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "scoplib.h"
+#include "scoplib_ansi.h"
 #undef PI
- 
+#define nil 0
 #include "md1redef.h"
 #include "section.h"
+#include "nrniv_mf.h"
 #include "md2redef.h"
-
+ 
 #if METHOD3
 extern int _method3;
 #endif
 
+#if !NRNGPU
 #undef exp
 #define exp hoc_Exp
-extern double hoc_Exp();
+extern double hoc_Exp(double);
+#endif
  
 #define _threadargscomma_ _p, _ppvar, _thread, _nt,
 #define _threadargs_ _p, _ppvar, _thread, _nt
+ 
+#define _threadargsprotocomma_ double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt,
+#define _threadargsproto_ double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt
  	/*SUPPRESS 761*/
 	/*SUPPRESS 762*/
 	/*SUPPRESS 763*/
@@ -52,6 +58,10 @@ extern double hoc_Exp();
 #define h _mlhh
 #endif
 #endif
+ 
+#if defined(__cplusplus)
+extern "C" {
+#endif
  static int hoc_nrnpointerindex =  -1;
  static Datum* _extcall_thread;
  static Prop* _extcall_prop;
@@ -59,19 +69,24 @@ extern double hoc_Exp();
  extern double celsius;
  /* declaration of user functions */
  static int _mechtype;
-extern int nrn_get_mechtype();
+extern void _nrn_cacheloop_reg(int, int);
+extern void hoc_register_prop_size(int, int, int);
+extern void hoc_register_limits(int, HocParmLimits*);
+extern void hoc_register_units(int, HocParmUnits*);
+extern void nrn_promote(Prop*, int, int);
+extern Memb_func* memb_func;
  extern void _nrn_setdata_reg(int, void(*)(Prop*));
  static void _setdata(Prop* _prop) {
  _extcall_prop = _prop;
  }
- static _hoc_setdata() {
- Prop *_prop, *hoc_getdata_range();
+ static void _hoc_setdata() {
+ Prop *_prop, *hoc_getdata_range(int);
  _prop = hoc_getdata_range(_mechtype);
    _setdata(_prop);
- ret(1.);
+ hoc_retpushx(1.);
 }
  /* connect user functions to hoc names */
- static IntFunc hoc_intfunc[] = {
+ static VoidFunc hoc_intfunc[] = {
  "setdata_epasn", _hoc_setdata,
  0, 0
 };
@@ -113,10 +128,13 @@ extern int nrn_get_mechtype();
  0,0,0
 };
  static double _sav_indep;
- static void nrn_alloc(), nrn_init(), nrn_state();
- static void nrn_cur(), nrn_jacob();
+ static void nrn_alloc(Prop*);
+static void  nrn_init(_NrnThread*, _Memb_list*, int);
+static void nrn_state(_NrnThread*, _Memb_list*, int);
+ static void nrn_cur(_NrnThread*, _Memb_list*, int);
+static void  nrn_jacob(_NrnThread*, _Memb_list*, int);
  /* connect range variables in _p that hoc is supposed to know about */
- static char *_mechanism[] = {
+ static const char *_mechanism[] = {
  "6.2.0",
 "epasn",
  "g_epasn",
@@ -129,10 +147,10 @@ extern int nrn_get_mechtype();
  static Symbol* _k_sym;
  static Symbol* _na_sym;
  
-static void nrn_alloc(_prop)
-	Prop *_prop;
-{
-	Prop *prop_ion, *need_memb();
+extern Prop* need_memb(Symbol*);
+
+static void nrn_alloc(Prop* _prop) {
+	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 10, _prop);
  	/*initialize range parameters*/
@@ -152,9 +170,15 @@ static void nrn_alloc(_prop)
  	_ppvar[3]._pval = &prop_ion->param[2]; /* nao */
  
 }
- static _initlists();
+ static void _initlists();
  static void _update_ion_pointer(Datum*);
- _epasn_reg() {
+ extern Symbol* hoc_lookup(const char*);
+extern void _nrn_thread_reg(int, int, void(*f)(Datum*));
+extern void _nrn_thread_table_reg(int, void(*)(double*, Datum*, Datum*, _NrnThread*, int));
+extern void hoc_register_tolerance(int, HocStateTolerance*, Symbol***);
+extern void _cvode_abstol( Symbol**, double*, int);
+
+ void _epasn_reg() {
 	int _vectorized = 1;
   _initlists();
  	ion_reg("k", -10000.);
@@ -165,9 +189,9 @@ static void nrn_alloc(_prop)
  _mechtype = nrn_get_mechtype(_mechanism[1]);
      _nrn_setdata_reg(_mechtype, _setdata);
      _nrn_thread_reg(_mechtype, 2, _update_ion_pointer);
-  hoc_register_dparam_size(_mechtype, 4);
+  hoc_register_prop_size(_mechtype, 10, 4);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 epasn /home/ximi/Documents/from_axon/ca1n1-mod/x86_64/epasn.mod\n");
+ 	ivoc_help("help ?1 epasn /home/neuro/Documents/from_axon/ca1n1-mod/x86_64/epasn.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -179,7 +203,7 @@ static char *modelname = "";
 static int error;
 static int _ninits = 0;
 static int _match_recurse=1;
-static _modl_cleanup(){ _match_recurse=1;}
+static void _modl_cleanup(){ _match_recurse=1;}
  extern void nrn_update_ion_pointer(Symbol*, Datum*, int, int);
  static void _update_ion_pointer(Datum* _ppvar) {
    nrn_update_ion_pointer(_k_sym, _ppvar, 0, 1);
@@ -295,11 +319,15 @@ static void nrn_state(_NrnThread* _nt, _Memb_list* _ml, int _type) {
 
 }
 
-static terminal(){}
+static void terminal(){}
 
-static _initlists(){
+static void _initlists(){
  double _x; double* _p = &_x;
  int _i; static int _first = 1;
   if (!_first) return;
 _first = 0;
 }
+
+#if defined(__cplusplus)
+} /* extern "C" */
+#endif

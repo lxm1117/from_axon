@@ -12,7 +12,7 @@
   load_file( "test_mat.hoc")
   load_file("hoc51_deriv.hoc")
 }
-//objref RunEnv
+objref RunEnv
  
   RunEnv = new str_obj()
   RunEnv.nsystem( "echo $cNeuro", RunEnv.s1 )	// get value of cNeuro environment var into RunEnv.s1
@@ -24,7 +24,7 @@
       sprint( RunEnv.s3, "/Volumes/d1/Users/ximing/cNeuro/lib/nrn/NMOD/ca1n1-mod/i686/.libs/libnrnmech.so", RunEnv.s1 )
     } else {
       if( ! strcmp( RunEnv.s2, "x86_64" ) ) {
-	sprint( RunEnv.s3, "/home/neuro/from_axon/ca1n1-mod/x86_64/.libs/libnrnmech.so", RunEnv.s1 )
+	sprint( RunEnv.s3, "/home/neuro/Documents/from_axon/ca1n1-mod/x86_64/.libs/libnrnmech.so", RunEnv.s1 )
      	print RunEnv.s3
 	 } else {
         printf( "\n\n\tUnknown architecture >>%s<<\n\n", RunEnv.s2 )
@@ -33,7 +33,7 @@
   }
  
   nrn_load_dll( RunEnv.s3 )
-}
+
 
 //================================================================================
 func vdef(){
@@ -183,7 +183,7 @@ proc do_Naf(){
 	ifsec "axon_iseg[0]" 	if( vdef( "aXi0_Gbar_Naf" )) 	gbar_Naf_i1 	= aXi0_Gbar_Naf
 	ifsec "axon_iseg[1]" 	if( vdef( "aXi1_Gbar_Naf" )) 	gbar_Naf_i1 	= aXi1_Gbar_Naf
 	}
-    ifsec "axon_inode"       	if( vdef( "aXr_Gbar_Naf" )) 	gbar_Naf_i0 	= aXr_Gbar_Naf
+    ifsec "axon_inode"      if( vdef( "aXr_Gbar_Naf" )) 	gbar_Naf_i0 	= aXr_Gbar_Naf
    }
  }
 //--------------------------------------------------------------------------------
@@ -390,7 +390,8 @@ proc init() {   local v0, v1
   init_last_call()	// hook to insert changes just before run() call
   iss.init_steady_state() // init_steady_state()
   if( check_iss_unstable()) return
-  dt=etr1.dt_sample
+  //dt=etr1.dt_sample
+  dt=0.01
 }
 
 // Hook to insert changes just before run() call (can be redefined later)
@@ -517,7 +518,8 @@ proc pDE_init_cell(){
   if( vdef( "soma_diam_f")) forsec "soma" { diam *= soma_diam_f printf( "soma diam %s %g\n", secname(), diam ) }
   
   { cvode.active(0)
-    dt=etr1.dt_sample 
+    //dt=etr1.dt_sample 
+	dt=0.01
     //cvode.active(1) cvode.atol(1.e-10)
   }
 
@@ -614,7 +616,10 @@ func pDE_do_fit_case(){ local i,irec localobj sL, emch
 // ------end hoc_main------
 
 //----- pDE VERBATIM -----
-cell_file_name="n400td-pc2-mM-axn-reduced.hoc"
+// drawing morphology 
+// cell_file_name="/home/neuro/Documents/from_axon/n400td/n400td-pc2-sp.hoc"
+cell_file_name="/home/neuro/Documents/from_axon/n400td/n400td-pc2-sp-axn.hoc"
+
 
 obfunc dfc_set_stims_etc(){
   print "check pDE dfc_set_stims++++++++++++++++++++"
@@ -1073,11 +1078,15 @@ proc pDE_do_all(){ local i
   printf( "\n" )
 }
 
-pDE_fc_list.append( new pDE_fit_case( "dat_files/2ms+1500pA_072006b_002_tr2_chopped.dat", "eMatch", "dfc_pkbeg(7.36,0.05)", "1", "soma", "dfc_set_stims_etc(1500/1000,2,5);dfc_eD.pkPs=3;", "dfc_sim_BBF()", "2:cNeuro/Data/Grover-2006/072006b/ACSF_0kHz/2ms+1500pA.htf", "blMax=4", "dfc_set_tgt(1500/1000,2,21,7.36+1+16,16)" ))
+pDE_fc_list.append( new pDE_fit_case( "/home/neuro/Documents/from_axon/dat_files/2ms+1500pA_072006b_002_tr2_chopped.dat", "eMatch", "dfc_pkbeg(7.36,0.05)", "1", "soma", "dfc_set_stims_etc(1500/1000,2,5);dfc_eD.pkPs=3;", "dfc_sim_BBF()", "2:cNeuro/Data/Grover-2006/072006b/ACSF_0kHz/2ms+1500pA.htf", "blMax=4", "dfc_set_tgt(1500/1000,2,21,7.36+1+16,16)" ))
 
-pDE_do_all()
+//pDE_do_all()
 // ---------- end write_eval_hoc ----------
 
 
 //dfc_plot_all()
+
+pDE_asg()
+pDE_init_cell()
+init()
 
